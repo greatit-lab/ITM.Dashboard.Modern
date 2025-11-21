@@ -6,7 +6,7 @@
 
     <main
       class="flex-1 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
-      :class="isSidebarOpen ? 'ml-72' : 'ml-20'"
+      :class="isSidebarOpen ? 'ml-60' : 'ml-20'"
     >
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
