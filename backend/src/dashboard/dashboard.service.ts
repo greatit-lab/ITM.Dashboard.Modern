@@ -41,7 +41,6 @@ export class DashboardService {
       baseFilter = Prisma.sql`r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE site = ${site} AND is_use = 'Y')`;
     }
 
-    // [수정] 무거운 TodayDataCount 쿼리 제거
     const result = await this.prisma.$queryRaw<SummaryRawResult[]>`
       SELECT
         (SELECT COUNT(DISTINCT r.eqpid)::int 
@@ -67,7 +66,7 @@ export class DashboardService {
       totalEqpCount: row.TotalEqpCount || 0,
       onlineAgentCount: row.OnlineAgentCount || 0,
       todayErrorCount: row.TodayErrorCount || 0,
-      newAlarmCount: row.NewAlarmCount || 0
+      newAlarmCount: row.NewAlarmCount || 0,
     };
   }
 
@@ -80,7 +79,7 @@ export class DashboardService {
       whereClause = Prisma.sql`r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE site = ${site})`;
     }
 
-    // [수정] 최근 1시간 성능 데이터만 조인하도록 최적화
+    // [수정] 시간 제한(WHERE serv_ts > NOW() - INTERVAL '1 hour')을 제거하여 모든 데이터 조회하도록 변경
     const results = await this.prisma.$queryRaw<AgentStatusRawResult[]>`
       SELECT 
           a.eqpid, 
@@ -101,7 +100,6 @@ export class DashboardService {
           SELECT eqpid, cpu_usage, mem_usage, serv_ts, ts, 
                  ROW_NUMBER() OVER(PARTITION BY eqpid ORDER BY serv_ts DESC) as rn
           FROM public.eqp_perf
-          WHERE serv_ts > NOW() - INTERVAL '1 hour' 
       ) p ON a.eqpid = p.eqpid AND p.rn = 1
       LEFT JOIN (
           SELECT eqpid, COUNT(*) AS alarm_count 
@@ -113,7 +111,7 @@ export class DashboardService {
       ORDER BY is_online DESC, a.eqpid;
     `;
 
-    return results.map(r => {
+    return results.map((r) => {
       let clockDrift: number | null = null;
       if (r.last_perf_serv_ts && r.last_perf_eqp_ts) {
         const servTs = new Date(r.last_perf_serv_ts).getTime();
@@ -136,7 +134,7 @@ export class DashboardService {
         locale: r.locale || '',
         timezone: r.timezone || '',
         todayAlarmCount: r.today_alarm_count,
-        clockDrift: clockDrift
+        clockDrift: clockDrift,
       };
     });
   }
