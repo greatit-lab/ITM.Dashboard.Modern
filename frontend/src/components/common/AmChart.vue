@@ -66,6 +66,18 @@ const createLineChart = (
     })
   );
 
+  if (config.xAxisDateFormat) {
+    const dateFormats = xAxis.get("dateFormats");
+    if (dateFormats) {
+      dateFormats["minute"] = config.xAxisDateFormat;
+      dateFormats["hour"] = config.xAxisDateFormat;
+      dateFormats["day"] = config.xAxisDateFormat;
+    }
+  }
+  if (config.tooltipDateFormat) {
+    xAxis.set("tooltipDateFormat", config.tooltipDateFormat);
+  }
+
   xAxis.get("renderer").labels.template.setAll({
     fill: textColor,
     rotation: -45,
@@ -103,8 +115,28 @@ const createLineChart = (
       const yAxisIndex = s.yAxisIndex || 0;
       const targetYAxis = yAxes[yAxisIndex] || yAxes[0];
 
-      // [수정] TypeScript 오류 해결: Y축 존재 여부를 확실하게 체크하여 undefined 방지
       if (!targetYAxis) return;
+
+      // [수정] 시리즈 색상 객체 생성
+      const seriesColor = am5.color(s.color);
+
+      // [수정] 툴팁 생성 및 색상 강제 적용
+      const tooltip = am5.Tooltip.new(root, {
+        labelText: s.tooltipText || "{valueY}",
+        autoTextColor: false, // 텍스트 색상 자동 조정 끄기 (흰색 고정 위해)
+      });
+
+      // 툴팁 배경색을 시리즈 색상과 100% 일치시킴
+      tooltip.get("background")?.setAll({
+        fill: seriesColor,
+        stroke: seriesColor,
+        fillOpacity: 0.9,
+      });
+
+      // 툴팁 글자색은 흰색으로 고정
+      tooltip.label.setAll({
+        fill: am5.color(0xffffff),
+      });
 
       const series = chart.series.push(
         am5xy.LineSeries.new(root, {
@@ -113,12 +145,16 @@ const createLineChart = (
           yAxis: targetYAxis,
           valueYField: s.valueField,
           valueXField: config.xField,
-          stroke: am5.color(s.color),
-          tooltip: am5.Tooltip.new(root, {
-            labelText: s.tooltipText || "{valueY}",
-          }),
+          stroke: seriesColor,
+          fill: seriesColor,
+          tooltip: tooltip,
         })
       );
+
+      // [수정] 선 굵기를 2 (기본값)으로 설정하여 얇게 표현
+      series.strokes.template.setAll({
+        strokeWidth: s.strokeWidth || 2,
+      });
 
       if (s.bulletRadius) {
         series.bullets.push(() =>
