@@ -5,14 +5,18 @@
     <Sidebar />
 
     <main
-      class="flex-1 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+      class="flex-1 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
       :class="isSidebarOpen ? 'ml-60' : 'ml-20'"
     >
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      <Header />
+
+      <div class="flex-1 relative">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </main>
   </div>
 </template>
@@ -20,6 +24,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
+import Header from "@/components/layout/Header.vue"; // 헤더 임포트
 
 const isSidebarOpen = ref(true);
 
