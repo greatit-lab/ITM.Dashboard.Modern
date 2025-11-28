@@ -1,6 +1,6 @@
 <template>
   <header
-    class="h-14 flex items-center justify-end px-6 bg-white/80 dark:bg-[#09090b]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 transition-colors duration-500 z-40 sticky top-0"
+    class="h-12 flex items-center justify-end px-6 bg-white/80 dark:bg-[#09090b]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 transition-colors duration-500 z-40 sticky top-0"
   >
     <div class="flex items-center gap-3">
       <button
