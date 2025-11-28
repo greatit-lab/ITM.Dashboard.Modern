@@ -2,13 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
-interface SummaryRawResult {
-  TotalEqpCount: number;
-  OnlineAgentCount: number;
-  TodayErrorCount: number;
-  NewAlarmCount: number;
-}
-
+// [추가] Raw Query 결과에 대한 타입 정의
 interface AgentStatusRawResult {
   eqpid: string;
   is_online: boolean;
@@ -32,54 +26,91 @@ interface AgentStatusRawResult {
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async getSummary(site?: string, sdwt?: string) {
-    let baseFilter = Prisma.sql`r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE is_use = 'Y')`;
-
-    if (sdwt) {
-      baseFilter = Prisma.sql`r.sdwt = ${sdwt} AND ${baseFilter}`;
-    } else if (site) {
-      baseFilter = Prisma.sql`r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE site = ${site} AND is_use = 'Y')`;
+  // [추가] 버전 비교 헬퍼 함수
+  private compareVersions(v1: string, v2: string) {
+    const p1 = v1
+      .replace(/[^0-9.]/g, '')
+      .split('.')
+      .map(Number);
+    const p2 = v2
+      .replace(/[^0-9.]/g, '')
+      .split('.')
+      .map(Number);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+      const n1 = p1[i] || 0;
+      const n2 = p2[i] || 0;
+      if (n1 > n2) return 1;
+      if (n1 < n2) return -1;
     }
+    return 0;
+  }
 
-    const result = await this.prisma.$queryRaw<SummaryRawResult[]>`
-      SELECT
-        (SELECT COUNT(DISTINCT r.eqpid)::int 
-         FROM public.ref_equipment r JOIN public.agent_info a ON r.eqpid = a.eqpid 
-         WHERE ${baseFilter}) AS "TotalEqpCount",
+  async getSummary(site?: string, sdwt?: string) {
+    // 1. [추가] 전체 Agent Info에서 최신 버전 조회 (필터 무시)
+    const distinctVersions = await this.prisma.agentInfo.findMany({
+      distinct: ['appVer'],
+      select: { appVer: true },
+      where: { appVer: { not: null } },
+    });
 
-        (SELECT COUNT(DISTINCT r.eqpid)::int 
-         FROM public.ref_equipment r JOIN public.agent_status s ON r.eqpid = s.eqpid 
-         WHERE s.status = 'ONLINE' AND ${baseFilter}) AS "OnlineAgentCount",
+    // 메모리에서 버전 정렬하여 최댓값 도출
+    const versions = distinctVersions
+      .map((v) => v.appVer)
+      .filter((v) => v) as string[];
 
-        (SELECT COUNT(*)::int 
-         FROM public.plg_error e JOIN public.ref_equipment r ON e.eqpid = r.eqpid 
-         WHERE e.time_stamp >= CURRENT_DATE AND ${baseFilter}) AS "TodayErrorCount",
+    versions.sort((a, b) => this.compareVersions(a, b));
+    const latestAgentVersion =
+      versions.length > 0 ? versions[versions.length - 1] : '';
 
-        (SELECT COUNT(*)::int 
-         FROM public.plg_error e JOIN public.ref_equipment r ON e.eqpid = r.eqpid 
-         WHERE e.time_stamp >= NOW() - INTERVAL '1 hour' AND ${baseFilter}) AS "NewAlarmCount"
-    `;
+    // 2. 기존 대시보드 통계용 필터 조건 생성
+    const equipmentWhere: Prisma.RefEquipmentWhereInput = {
+      sdwtRel: {
+        isUse: 'Y',
+        ...(site ? { site } : {}),
+      },
+      ...(sdwt ? { sdwt } : {}),
+    };
 
-    const row = result[0] || ({} as SummaryRawResult);
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    // 3. 병렬 쿼리 실행
+    const [totalEqp, onlineEqp, todayError, newAlarm] = await Promise.all([
+      this.prisma.refEquipment.count({ where: equipmentWhere }),
+      this.prisma.refEquipment.count({
+        where: { ...equipmentWhere, agentStatus: { status: 'ONLINE' } },
+      }),
+      this.prisma.plgError.count({
+        where: { timeStamp: { gte: startOfToday }, equipment: equipmentWhere },
+      }),
+      this.prisma.plgError.count({
+        where: { timeStamp: { gte: oneHourAgo }, equipment: equipmentWhere },
+      }),
+    ]);
 
     return {
-      totalEqpCount: row.TotalEqpCount || 0,
-      onlineAgentCount: row.OnlineAgentCount || 0,
-      todayErrorCount: row.TodayErrorCount || 0,
-      newAlarmCount: row.NewAlarmCount || 0,
+      totalEqpCount: totalEqp,
+      onlineAgentCount: onlineEqp,
+      todayErrorCount: todayError,
+      newAlarmCount: newAlarm,
+      latestAgentVersion: latestAgentVersion, // [추가] 결과에 최신 버전 포함
     };
   }
 
   async getAgentStatus(site?: string, sdwt?: string) {
-    let whereClause = Prisma.sql`1=1`;
+    let whereCondition = Prisma.sql`WHERE r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE is_use = 'Y')`;
 
     if (sdwt) {
-      whereClause = Prisma.sql`r.sdwt = ${sdwt}`;
+      whereCondition = Prisma.sql`${whereCondition} AND r.sdwt = ${sdwt}`;
     } else if (site) {
-      whereClause = Prisma.sql`r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE site = ${site})`;
+      whereCondition = Prisma.sql`${whereCondition} AND r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE site = ${site})`;
     }
 
-    // [수정] 시간 제한(WHERE serv_ts > NOW() - INTERVAL '1 hour')을 제거하여 모든 데이터 조회하도록 변경
     const results = await this.prisma.$queryRaw<AgentStatusRawResult[]>`
       SELECT 
           a.eqpid, 
@@ -107,7 +138,7 @@ export class DashboardService {
           WHERE time_stamp >= CURRENT_DATE
           GROUP BY eqpid
       ) e ON a.eqpid = e.eqpid
-      WHERE ${whereClause}
+      ${whereCondition}
       ORDER BY is_online DESC, a.eqpid;
     `;
 
