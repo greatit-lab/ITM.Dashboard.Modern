@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-6 min-h-full transition-colors duration-500 ease-in-out bg-[#F8FAFC] dark:bg-[#09090B] font-sans"
+    class="min-h-full transition-colors duration-500 ease-in-out bg-[#F8FAFC] dark:bg-[#09090B] font-sans"
   >
     <div
       class="flex flex-col md:flex-row justify-between items-center mb-5 gap-4"
@@ -91,7 +91,7 @@
         Ready to Analyze
       </h3>
       <p class="text-slate-500 dark:text-slate-500 text-xs mt-1">
-        Please select a <b>Site</b> and <b>SDWT</b>.
+        Please select a <b>Site</b> and <b>SDWT</b> to view the dashboard.
       </p>
     </div>
 
