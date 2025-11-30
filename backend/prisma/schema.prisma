@@ -15,17 +15,13 @@ model RefEquipment {
   eqpid String @id
   sdwt  String
   
-  // [수정] RefSdwt와의 관계 설정 (코드에서 'sdwtRel'로 접근)
+  // [관계 설정] RefSdwt (N:1)
   sdwtRel     RefSdwt      @relation(fields: [sdwt], references: [sdwt]) 
   
-  // 다른 테이블들과의 관계 설정
+  // [관계 설정] 다른 테이블들 (1:1 또는 1:N)
   agentInfo   AgentInfo?
   agentStatus AgentStatus?
-  
-  // [수정] 에러 로그와의 1:N 관계 설정 (코드에서 'plgErrors'로 접근 가능)
   plgErrors   PlgError[]   
-  
-  // [수정] 성능 로그와의 1:N 관계 설정
   eqpPerfs    EqpPerf[]    
 
   @@map("ref_equipment")
@@ -36,7 +32,7 @@ model RefSdwt {
   site   String
   isUse  String @map("is_use") // 'Y' or 'N'
 
-  // RefEquipment와의 역방향 관계
+  // [관계 설정] RefEquipment (1:N)
   equipments RefEquipment[]
 
   @@map("ref_sdwt")
@@ -54,7 +50,7 @@ model AgentInfo {
   timezone    String?
   macAddress  String? @map("mac_address")
   
-  // RefEquipment와의 1:1 관계
+  // [관계 설정] RefEquipment (1:1)
   equipment RefEquipment @relation(fields: [eqpid], references: [eqpid])
 
   @@map("agent_info")
@@ -65,7 +61,7 @@ model AgentStatus {
   status         String?   // 'ONLINE' | 'OFFLINE'
   lastPerfUpdate DateTime? @map("last_perf_update")
   
-  // RefEquipment와의 1:1 관계
+  // [관계 설정] RefEquipment (1:1)
   equipment RefEquipment @relation(fields: [eqpid], references: [eqpid])
 
   @@map("agent_status")
@@ -74,22 +70,42 @@ model AgentStatus {
 model PlgError {
   eqpid     String
   timeStamp DateTime @map("time_stamp")
-  errorId   String?  @map("error_id")     // 필요한 필드 추가
-  errorLabel String? @map("error_label")  // 필요한 필드 추가
+  errorId   String?  @map("error_id")
+  errorLabel String? @map("error_label")
   
-  // [수정] RefEquipment와의 N:1 관계 설정 (코드에서 'equipment'로 접근)
+  // [관계 설정] RefEquipment (N:1)
   equipment RefEquipment @relation(fields: [eqpid], references: [eqpid])
 
   @@id([eqpid, timeStamp])
   @@map("plg_error")
 }
 
+// [수정] Wafer Data 테이블 상세 컬럼 추가 (WaferService 필터링용)
 model PlgWfFlat {
-  eqpid  String
-  servTs DateTime @map("serv_ts")
-  // 필요한 경우 관계 추가
+  eqpid       String
+  servTs      DateTime @map("serv_ts")
   
-  @@id([eqpid, servTs])
+  // 조회 조건 컬럼
+  lotid       String?
+  waferid     Int?
+  cassettercp String?
+  stagercp    String?
+  stagegroup  String?
+  film        String?
+  
+  // 상세 데이터 컬럼
+  point       Int?
+  t1          Float?
+  gof         Float?
+  z           Float?
+  srvisz      Float?
+  x           Float?
+  y           Float?
+  dierow      Float?
+  diecol      Float?
+
+  // Primary Key 구성 (데이터 특성에 따라 조정 가능)
+  @@id([eqpid, servTs]) 
   @@map("plg_wf_flat")
 }
 
@@ -99,15 +115,17 @@ model EqpPerf {
   ts       DateTime?
   cpuUsage Float?   @map("cpu_usage")
   memUsage Float?   @map("mem_usage")
+  cpuTemp  Float?   @map("cpu_temp")
+  gpuTemp  Float?   @map("gpu_temp")
+  fanSpeed Float?   @map("fan_speed")
 
-  // RefEquipment와의 N:1 관계 설정
+  // [관계 설정] RefEquipment (N:1)
   equipment RefEquipment @relation(fields: [eqpid], references: [eqpid])
 
   @@id([eqpid, servTs])
   @@map("eqp_perf")
 }
 
-// 프로세스 성능 등 추가 테이블
 model EqpProcPerf {
   eqpid         String
   servTs        DateTime @map("serv_ts")
@@ -116,6 +134,18 @@ model EqpProcPerf {
 
   @@id([eqpid, servTs, processName])
   @@map("eqp_proc_perf")
+}
+
+model EqpLampLife {
+  eqpid        String
+  lampId       String   @map("lamp_id")
+  servTs       DateTime @map("serv_ts")
+  ageHour      Int?     @map("age_hour")
+  lifespanHour Int?     @map("lifespan_hour")
+  lastChanged  DateTime? @map("last_changed")
+
+  @@id([eqpid, lampId, servTs])
+  @@map("eqp_lamp_life")
 }
 
 model ItmInfo {
@@ -127,4 +157,12 @@ model ItmInfo {
   dbVersion   String? @map("db_version")
 
   @@map("itm_info")
+}
+
+// CgfLotUniformityMetrics (필터링 제외 컬럼 정보 등)
+model CgfLotUniformityMetrics {
+  metricName String @id @map("metric_name")
+  isExcluded String? @map("is_excluded") // 'Y' or 'N'
+
+  @@map("cgf_lot_uniformity_metrics")
 }
