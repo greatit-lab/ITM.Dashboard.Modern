@@ -555,18 +555,18 @@
                 @click="openChart(data)"
               >
                 <div
-                  class="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1 relative overflow-hidden"
+                  class="relative w-full h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800"
                 >
                   <div
-                    class="bg-blue-500 h-full rounded-full"
+                    class="h-full bg-blue-500 rounded-full"
                     :style="{ width: data.cpuUsage + '%' }"
                   ></div>
                 </div>
                 <div
-                  class="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1 relative overflow-hidden"
+                  class="relative w-full h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800"
                 >
                   <div
-                    class="bg-teal-500 h-full rounded-full"
+                    class="h-full bg-teal-500 rounded-full"
                     :style="{ width: data.memoryUsage + '%' }"
                   ></div>
                 </div>
@@ -578,14 +578,14 @@
             <template #header>
               <span
                 v-tooltip.top="'+: Agent Fast\n-: Agent Slow'"
-                class="cursor-help border-b border-dotted border-slate-400 dark:border-slate-600 whitespace-nowrap"
+                class="border-b border-dotted cursor-help border-slate-400 dark:border-slate-600 whitespace-nowrap"
               >
                 Time Diff
               </span>
             </template>
             <template #body="{ data }">
               <span
-                class="text-xs font-mono tracking-tight"
+                class="font-mono text-xs tracking-tight"
                 :class="getClockDriftColor(data.clockDrift)"
                 >{{ formatTimeDifference(data.clockDrift) }}</span
               >
@@ -635,10 +635,10 @@
       >
         <div
           v-if="isChartLoading"
-          class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-950/80 z-10 rounded-xl"
+          class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-950/80 rounded-xl"
         >
           <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
-          <p class="text-sm text-slate-500 mt-4 font-medium animate-pulse">
+          <p class="mt-4 text-sm font-medium text-slate-500 animate-pulse">
             데이터를 불러오는 중입니다...
           </p>
         </div>
@@ -654,16 +654,16 @@
 
         <div
           v-else-if="!isChartLoading && chartData.length === 0"
-          class="h-full flex flex-col items-center justify-center text-slate-400 select-none"
+          class="flex flex-col items-center justify-center h-full select-none text-slate-400"
         >
           <div
-            class="w-24 h-24 bg-slate-50 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 shadow-inner"
+            class="flex items-center justify-center w-24 h-24 mb-4 rounded-full shadow-inner bg-slate-50 dark:bg-zinc-900"
           >
             <i
-              class="pi pi-chart-bar text-4xl text-slate-300 dark:text-zinc-700"
+              class="text-4xl pi pi-chart-bar text-slate-300 dark:text-zinc-700"
             ></i>
           </div>
-          <h3 class="text-lg font-bold text-slate-600 dark:text-slate-300 mb-1">
+          <h3 class="mb-1 text-lg font-bold text-slate-600 dark:text-slate-300">
             데이터가 없습니다
           </h3>
           <p class="text-sm text-slate-500 dark:text-slate-500">
@@ -1127,5 +1127,6 @@ body .p-tooltip .p-tooltip-arrow {
   font-size: 12px !important; /* 11px -> 12px로 변경 */
 }
 </style>
+
 
 
