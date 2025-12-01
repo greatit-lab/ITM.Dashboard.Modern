@@ -1,3 +1,4 @@
+<!-- frontend/src/components/common/AmChart.vue -->
 <template>
   <div ref="chartRef" class="w-full h-full" :style="{ height: height }"></div>
 </template>
@@ -66,14 +67,30 @@ const createLineChart = (
     })
   );
 
+  // [수정] X축 라벨 포맷 일괄 적용 (기본 포맷 + 기간 변경 포맷)
   if (config.xAxisDateFormat) {
     const dateFormats = xAxis.get("dateFormats");
+    const periodChangeDateFormats = xAxis.get("periodChangeDateFormats"); // [추가]
+
+    // 기본 단위별 포맷 설정
     if (dateFormats) {
       dateFormats["minute"] = config.xAxisDateFormat;
       dateFormats["hour"] = config.xAxisDateFormat;
       dateFormats["day"] = config.xAxisDateFormat;
+      dateFormats["week"] = config.xAxisDateFormat;
+      dateFormats["month"] = config.xAxisDateFormat;
+    }
+
+    // [핵심] 기간 변경 시(예: 08:00 정각, 날짜 변경선 등)에도 동일한 포맷 강제 적용
+    if (periodChangeDateFormats) {
+      periodChangeDateFormats["minute"] = config.xAxisDateFormat;
+      periodChangeDateFormats["hour"] = config.xAxisDateFormat;
+      periodChangeDateFormats["day"] = config.xAxisDateFormat;
+      periodChangeDateFormats["week"] = config.xAxisDateFormat;
+      periodChangeDateFormats["month"] = config.xAxisDateFormat;
     }
   }
+  
   if (config.tooltipDateFormat) {
     xAxis.set("tooltipDateFormat", config.tooltipDateFormat);
   }
@@ -117,23 +134,19 @@ const createLineChart = (
 
       if (!targetYAxis) return;
 
-      // [수정] 시리즈 색상 객체 생성
       const seriesColor = am5.color(s.color);
 
-      // [수정] 툴팁 생성 및 색상 강제 적용
       const tooltip = am5.Tooltip.new(root, {
         labelText: s.tooltipText || "{valueY}",
-        autoTextColor: false, // 텍스트 색상 자동 조정 끄기 (흰색 고정 위해)
+        autoTextColor: false,
       });
 
-      // 툴팁 배경색을 시리즈 색상과 100% 일치시킴
       tooltip.get("background")?.setAll({
         fill: seriesColor,
         stroke: seriesColor,
         fillOpacity: 0.9,
       });
 
-      // 툴팁 글자색은 흰색으로 고정
       tooltip.label.setAll({
         fill: am5.color(0xffffff),
       });
@@ -151,11 +164,11 @@ const createLineChart = (
         })
       );
 
-      // [수정] 선 굵기를 2 (기본값)으로 설정하여 얇게 표현
       series.strokes.template.setAll({
         strokeWidth: s.strokeWidth || 2,
       });
 
+      // [기존 로직 유지] config에 bulletRadius가 있으면 원형 표식 추가
       if (s.bulletRadius) {
         series.bullets.push(() =>
           am5.Bullet.new(root, {
