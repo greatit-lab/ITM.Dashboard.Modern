@@ -4,17 +4,17 @@
     class="min-h-full transition-colors duration-500 ease-in-out bg-[#F8FAFC] dark:bg-[#09090B] font-sans"
   >
     <div
-      class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3"
+      class="flex flex-col items-center justify-between gap-3 mb-4 md:flex-row"
     >
       <div class="flex items-center gap-3">
         <div
-          class="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center border border-slate-100 dark:border-zinc-800"
+          class="flex items-center justify-center w-10 h-10 bg-white border shadow-sm rounded-xl dark:bg-zinc-900 border-slate-100 dark:border-zinc-800"
         >
-          <i class="pi pi-objects-column text-xl text-indigo-500"></i>
+          <i class="text-xl text-indigo-500 pi pi-objects-column"></i>
         </div>
         <div>
           <h1
-            class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2"
+            class="flex items-center gap-2 text-xl font-extrabold tracking-tight text-slate-900 dark:text-white"
           >
             Overview
             <span
@@ -23,7 +23,7 @@
             >
               <span class="relative flex h-1.5 w-1.5">
                 <span
-                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+                  class="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping bg-emerald-400"
                 ></span>
                 <span
                   class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"
@@ -42,7 +42,7 @@
     <div
       class="mb-5 bg-white dark:bg-[#111111] p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 flex flex-wrap gap-2 items-center justify-between shadow-sm"
     >
-      <div class="flex gap-2 flex-1 overflow-x-auto px-1">
+      <div class="flex flex-1 gap-2 px-1 overflow-x-auto">
         <div class="min-w-[140px]">
           <Select
             v-model="filterStore.selectedSite"
@@ -92,12 +92,12 @@
 
     <div
       v-if="!hasSearched"
-      class="flex flex-col justify-center items-center h-72 fade-in border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl"
+      class="flex flex-col items-center justify-center border-2 border-dashed h-72 fade-in border-slate-200 dark:border-zinc-800 rounded-3xl"
     >
       <div
-        class="w-12 h-12 bg-slate-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-3 text-slate-400 dark:text-zinc-500"
+        class="flex items-center justify-center w-12 h-12 mb-3 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500"
       >
-        <i class="pi pi-search text-lg"></i>
+        <i class="text-lg pi pi-search"></i>
       </div>
       <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200">
         Ready to Analyze
@@ -110,26 +110,23 @@
     <div v-else class="space-y-5 fade-in">
       <div
         v-if="isSummaryLoading"
-        class="flex flex-col justify-center items-center h-20"
+        class="flex flex-col items-center justify-center h-20"
       >
         <ProgressSpinner style="width: 20px; height: 20px" strokeWidth="4" />
         <p class="text-[10px] text-slate-400 mt-2">Loading Summary...</p>
       </div>
 
-      <div
-        v-else
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
-      >
+      <div v-else class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
         <div
           @click="setActiveFilter('All')"
-          class="relative h-20 rounded-xl p-3 cursor-pointer transition-all duration-300 hover:-translate-y-1 border overflow-hidden"
+          class="relative h-20 p-3 overflow-hidden transition-all duration-300 border cursor-pointer rounded-xl hover:-translate-y-1"
           :class="[
             activeFilter === 'All'
               ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/20 ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-black border-transparent'
               : 'bg-white dark:bg-[#111111] border-slate-200 dark:border-zinc-800 hover:border-indigo-400',
           ]"
         >
-          <div class="flex justify-between items-center h-full relative z-10">
+          <div class="relative z-10 flex items-center justify-between h-full">
             <div>
               <p
                 class="text-[9px] font-bold uppercase tracking-widest mb-0.5"
@@ -153,28 +150,28 @@
               </p>
             </div>
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              class="flex items-center justify-center w-10 h-10 rounded-lg"
               :class="
                 activeFilter === 'All'
                   ? 'bg-white/20 text-white'
                   : 'bg-slate-50 dark:bg-zinc-800 text-indigo-500'
               "
             >
-              <i class="pi pi-server text-xl"></i>
+              <i class="text-xl pi pi-server"></i>
             </div>
           </div>
         </div>
 
         <div
           @click="setActiveFilter('Online')"
-          class="relative h-20 rounded-xl p-3 cursor-pointer transition-all duration-300 hover:-translate-y-1 border overflow-hidden"
+          class="relative h-20 p-3 overflow-hidden transition-all duration-300 border cursor-pointer rounded-xl hover:-translate-y-1"
           :class="[
             activeFilter === 'Online'
               ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 ring-2 ring-offset-2 ring-emerald-500 dark:ring-offset-black border-transparent'
               : 'bg-white dark:bg-[#111111] border-slate-200 dark:border-zinc-800 hover:border-emerald-400',
           ]"
         >
-          <div class="flex justify-between items-center h-full relative z-10">
+          <div class="relative z-10 flex items-center justify-between h-full">
             <div>
               <p
                 class="text-[9px] font-bold uppercase tracking-widest mb-0.5"
@@ -198,28 +195,28 @@
               </p>
             </div>
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              class="flex items-center justify-center w-10 h-10 rounded-lg"
               :class="
                 activeFilter === 'Online'
                   ? 'bg-white/20 text-white'
                   : 'bg-slate-50 dark:bg-zinc-800 text-emerald-500'
               "
             >
-              <i class="pi pi-wifi text-xl"></i>
+              <i class="text-xl pi pi-wifi"></i>
             </div>
           </div>
         </div>
 
         <div
           @click="setActiveFilter('Offline')"
-          class="relative h-20 rounded-xl p-3 cursor-pointer transition-all duration-300 hover:-translate-y-1 border overflow-hidden"
+          class="relative h-20 p-3 overflow-hidden transition-all duration-300 border cursor-pointer rounded-xl hover:-translate-y-1"
           :class="[
             activeFilter === 'Offline'
               ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/20 ring-2 ring-offset-2 ring-rose-500 dark:ring-offset-black border-transparent'
               : 'bg-white dark:bg-[#111111] border-slate-200 dark:border-zinc-800 hover:border-rose-400',
           ]"
         >
-          <div class="flex justify-between items-center h-full relative z-10">
+          <div class="relative z-10 flex items-center justify-between h-full">
             <div>
               <p
                 class="text-[9px] font-bold uppercase tracking-widest mb-0.5"
@@ -247,14 +244,14 @@
               </p>
             </div>
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              class="flex items-center justify-center w-10 h-10 rounded-lg"
               :class="
                 activeFilter === 'Offline'
                   ? 'bg-white/20 text-white'
                   : 'bg-slate-50 dark:bg-zinc-800 text-rose-500'
               "
             >
-              <i class="pi pi-ban text-xl"></i>
+              <i class="text-xl pi pi-ban"></i>
             </div>
           </div>
         </div>
@@ -1130,3 +1127,4 @@ body .p-tooltip .p-tooltip-arrow {
   font-size: 12px !important; /* 11px -> 12px로 변경 */
 }
 </style>
+
