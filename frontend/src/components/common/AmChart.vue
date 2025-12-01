@@ -90,7 +90,7 @@ const createLineChart = (
       periodChangeDateFormats["month"] = config.xAxisDateFormat;
     }
   }
-  
+
   if (config.tooltipDateFormat) {
     xAxis.set("tooltipDateFormat", config.tooltipDateFormat);
   }
@@ -208,3 +208,4 @@ watch(
   { deep: true }
 );
 </script>
+
