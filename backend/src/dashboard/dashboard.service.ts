@@ -2,58 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
-// [추가] Raw Query 결과에 대한 타입 정의
-interface AgentStatusRawResult {
-  eqpid: string;
-  is_online: boolean;
-  last_contact: Date | null;
-  pc_name: string | null;
-  cpu_usage: number;
-  mem_usage: number;
-  app_ver: string | null;
-  type: string | null;
-  ip_address: string | null;
-  os: string | null;
-  system_type: string | null;
-  locale: string | null;
-  timezone: string | null;
-  today_alarm_count: number;
-  last_perf_serv_ts: Date | null;
-  last_perf_eqp_ts: Date | null;
-}
+// ... (AgentStatusRawResult 인터페이스 생략) ...
 
 @Injectable()
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  // [추가] 버전 비교 헬퍼 함수
-  private compareVersions(v1: string, v2: string) {
-    const p1 = v1
-      .replace(/[^0-9.]/g, '')
-      .split('.')
-      .map(Number);
-    const p2 = v2
-      .replace(/[^0-9.]/g, '')
-      .split('.')
-      .map(Number);
-    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
-      const n1 = p1[i] || 0;
-      const n2 = p2[i] || 0;
-      if (n1 > n2) return 1;
-      if (n1 < n2) return -1;
-    }
-    return 0;
-  }
+  // ... (compareVersions 함수 생략) ...
 
   async getSummary(site?: string, sdwt?: string) {
-    // 1. [추가] 전체 Agent Info에서 최신 버전 조회 (필터 무시)
+    // 1. 전체 Agent Info에서 최신 버전 조회
     const distinctVersions = await this.prisma.agentInfo.findMany({
       distinct: ['appVer'],
       select: { appVer: true },
       where: { appVer: { not: null } },
     });
 
-    // 메모리에서 버전 정렬하여 최댓값 도출
     const versions = distinctVersions
       .map((v) => v.appVer)
       .filter((v) => v) as string[];
@@ -62,13 +26,16 @@ export class DashboardService {
     const latestAgentVersion =
       versions.length > 0 ? versions[versions.length - 1] : '';
 
-    // 2. 기존 대시보드 통계용 필터 조건 생성
+    // 2. 대시보드 통계용 필터 조건 생성
     const equipmentWhere: Prisma.RefEquipmentWhereInput = {
       sdwtRel: {
         isUse: 'Y',
         ...(site ? { site } : {}),
       },
       ...(sdwt ? { sdwt } : {}),
+      agentInfo: {
+        isNot: null,
+      },
     };
 
     const now = new Date();
@@ -80,14 +47,27 @@ export class DashboardService {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     // 3. 병렬 쿼리 실행
-    const [totalEqp, onlineEqp, todayError, newAlarm] = await Promise.all([
+    const [totalEqp, onlineEqp, errorEqpGroup, todayErrorTotal, newAlarm] = await Promise.all([
+      // Total Agents
       this.prisma.refEquipment.count({ where: equipmentWhere }),
+      
+      // Online Agents
       this.prisma.refEquipment.count({
         where: { ...equipmentWhere, agentStatus: { status: 'ONLINE' } },
       }),
+      
+      // [수정] Alerts (장비 수): GroupBy로 에러가 발생한 '장비'의 개수를 셈
+      this.prisma.plgError.groupBy({
+        by: ['eqpid'],
+        where: { timeStamp: { gte: startOfToday }, equipment: equipmentWhere },
+      }),
+
+      // [추가] Alerts (총 발생 건수): 기존 로직 유지 (보조 정보용)
       this.prisma.plgError.count({
         where: { timeStamp: { gte: startOfToday }, equipment: equipmentWhere },
       }),
+      
+      // New Alarms (최근 1시간 발생 건수)
       this.prisma.plgError.count({
         where: { timeStamp: { gte: oneHourAgo }, equipment: equipmentWhere },
       }),
@@ -96,12 +76,14 @@ export class DashboardService {
     return {
       totalEqpCount: totalEqp,
       onlineAgentCount: onlineEqp,
-      todayErrorCount: todayError,
+      todayErrorCount: errorEqpGroup.length, // [변경] 장비 대수 (예: 1)
+      todayErrorTotalCount: todayErrorTotal, // [추가] 총 발생 건수 (예: 18)
       newAlarmCount: newAlarm,
-      latestAgentVersion: latestAgentVersion, // [추가] 결과에 최신 버전 포함
+      latestAgentVersion: latestAgentVersion,
     };
   }
 
+  // ... (getAgentStatus 메서드는 기존 유지) ...
   async getAgentStatus(site?: string, sdwt?: string) {
     let whereCondition = Prisma.sql`WHERE r.sdwt IN (SELECT sdwt FROM public.ref_sdwt WHERE is_use = 'Y')`;
 
@@ -131,6 +113,7 @@ export class DashboardService {
           SELECT eqpid, cpu_usage, mem_usage, serv_ts, ts, 
                  ROW_NUMBER() OVER(PARTITION BY eqpid ORDER BY serv_ts DESC) as rn
           FROM public.eqp_perf
+          WHERE serv_ts >= NOW() - INTERVAL '1 day' 
       ) p ON a.eqpid = p.eqpid AND p.rn = 1
       LEFT JOIN (
           SELECT eqpid, COUNT(*) AS alarm_count 
@@ -139,7 +122,7 @@ export class DashboardService {
           GROUP BY eqpid
       ) e ON a.eqpid = e.eqpid
       ${whereCondition}
-      ORDER BY is_online DESC, a.eqpid;
+      ORDER BY a.eqpid ASC;
     `;
 
     return results.map((r) => {
