@@ -55,7 +55,7 @@
             @change="onSiteChanged"
           />
         </div>
-        <div class="min-w-[140px]">
+        <div class="min-w-[180px]">
           <Select
             v-model="filterStore.selectedSdwt"
             :options="sdwts"
@@ -1037,24 +1037,33 @@ const formatDate = (d: string | null) => {
 </script>
 
 <style scoped>
-/* Select Styles */
+/* Select Styles - [수정] 폰트 크기를 11px로 조정하여 '한 단계 작게' 적용 */
 :deep(.p-select),
 :deep(.custom-dropdown) {
-  @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold text-xs shadow-none transition-colors;
+  @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors;
 }
+
+/* [핵심 수정] 라벨(선택된 텍스트) 폰트 크기 11px 적용 및 수직 정렬을 위한 패딩 조정 */
+:deep(.custom-dropdown .p-select-label) {
+  @apply text-[13px] py-[5px] px-3;
+}
+
 :deep(.custom-dropdown.small) {
-  @apply h-7 text-[10px];
-}
-:deep(.custom-dropdown.small .p-select-label) {
-  padding: 0.3rem 0.6rem;
+  @apply h-7;
 }
 
 :deep(.custom-dropdown:hover) {
   @apply !bg-slate-200 dark:!bg-zinc-800;
 }
+
+/* 드롭다운 화살표 아이콘 크기 조정 */
 :deep(.p-select-dropdown) {
-  @apply text-slate-400 dark:text-zinc-500 w-8;
+  @apply text-slate-400 dark:text-zinc-500 w-6;
 }
+:deep(.p-select-dropdown svg) {
+  @apply w-3 h-3;
+}
+/* 테이블 헤더 스타일 유지 */
 :deep(.p-datatable .p-datatable-thead > tr > th) {
   font-weight: 800;
   font-size: 0.65rem;
@@ -1102,6 +1111,24 @@ const formatDate = (d: string | null) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+</style>
+
+<style>
+.custom-dropdown-panel .p-select-option {
+  padding: 6px 10px !important;
+  font-size: 11px !important; /* [수정] 옵션 폰트 11px */
+}
+.custom-dropdown-panel .p-select-empty-message {
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+}
+/* 툴팁 스타일 */
+body .p-tooltip .p-tooltip-text {
+  font-size: 10px !important;
+  background-color: #64748b !important;
+  white-space: nowrap !important;
+  padding: 3px 6px !important;
 }
 </style>
 
