@@ -290,12 +290,6 @@
                   "
                 >
                   {{ summary.todayErrorCount }}
-                  <span
-                    class="text-[10px] font-medium opacity-80"
-                    v-if="summary.todayErrorTotalCount > 0"
-                  >
-                    (Total: {{ summary.todayErrorTotalCount }})
-                  </span>
                 </p>
                 <span
                   v-if="summary.newAlarmCount > 0"
@@ -712,7 +706,6 @@ const summary = ref<DashboardSummaryDto>({
   totalEqpCount: 0,
   onlineAgentCount: 0,
   todayErrorCount: 0,
-  todayErrorTotalCount: 0, // [수정] 타입 오류 해결을 위한 초기값 추가
   newAlarmCount: 0,
   latestAgentVersion: "",
 });
@@ -894,6 +887,7 @@ const filteredAgents = computed(() => {
   }
 });
 
+// [추가] 렌더링용 Slice된 Agent 목록
 const displayedAgents = computed(() => {
   const start = first.value;
   const end = start + rowsPerPage.value;
