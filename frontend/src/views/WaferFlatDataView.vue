@@ -232,7 +232,7 @@
         class="flex-[5] flex flex-col gap-3 w-full 2xl:min-w-[600px] overflow-hidden h-full"
       >
         <div
-          class="flex flex-col overflow-hidden bg-white border shadow-sm rounded-xl dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shrink-0 h-[45%]"
+          class="flex flex-col overflow-hidden bg-white border shadow-sm rounded-xl dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shrink-0 h-[50%]"
         >
           <div
             class="flex items-center justify-between p-2 bg-white border-b border-slate-100 dark:border-zinc-800 dark:bg-zinc-900"
@@ -344,7 +344,7 @@
                 <template #body="{ data }">
                   <span
                     class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-xs font-mono font-bold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300"
-                    >#{{ data.waferId }}</span
+                    >{{ data.waferId }}</span
                   >
                 </template>
               </Column>
@@ -462,7 +462,7 @@
                   <tr
                     v-for="(row, idx) in pointData.data"
                     :key="idx"
-                    class="transition-colors hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                    class="group transition-colors hover:bg-teal-50 dark:hover:bg-teal-900/20"
                     :class="{
                       'bg-teal-100 dark:bg-teal-900/40':
                         idx === selectedPointIdx,
@@ -477,11 +477,16 @@
                         pointData.headers[ci] !== 'serv_ts'
                       "
                       class="py-1 px-2 min-w-[80px] cursor-pointer"
-                      :class="
+                      :class="[
                         pointData.headers[ci] === 'point'
-                          ? 'pl-4 pr-4 text-right font-bold sticky left-0 z-10 bg-white dark:bg-zinc-900 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
-                          : 'text-right'
-                      "
+                          ? 'pl-4 pr-4 text-right font-bold sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
+                          : 'text-right',
+                        pointData.headers[ci] === 'point'
+                          ? (idx === selectedPointIdx 
+                              ? 'bg-teal-100 dark:bg-teal-900/40 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/40' 
+                              : 'bg-white dark:bg-zinc-900 group-hover:bg-teal-50 dark:group-hover:bg-teal-900/20')
+                          : ''
+                      ]"
                     >
                       {{ cell }}
                     </td>
@@ -685,7 +690,7 @@
         class="flex-[2] flex flex-col gap-4 h-full w-full 2xl:min-w-[400px]"
       >
         <div
-          class="flex-1 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 relative flex flex-col items-center justify-center p-1 overflow-hidden"
+          class="h-[50%] shrink-0 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 relative flex flex-col items-center justify-center p-1 overflow-hidden"
         >
           <div
             class="absolute top-3 left-4 text-sm font-bold text-slate-700 dark:text-slate-200 z-10 flex items-center"
@@ -694,32 +699,36 @@
           </div>
 
           <div
-            class="relative h-full w-auto aspect-square max-w-full rounded-full border-4 border-slate-100 dark:border-zinc-700 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] overflow-hidden bg-slate-50 dark:bg-black flex items-center justify-center"
+            class="relative h-full aspect-square max-w-full rounded-full border-4 border-slate-100 dark:border-zinc-700 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] overflow-hidden bg-slate-50 dark:bg-black flex items-center justify-center"
           >
             <div
               v-if="isImageLoading"
-              class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 z-20"
+              class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 z-20 backdrop-blur-sm transition-opacity duration-300"
             >
               <ProgressSpinner
                 style="width: 40px; height: 40px"
                 strokeWidth="4"
               />
-              <span class="mt-3 text-xs text-slate-400 font-medium"
-                >Loading Map...</span
+              <span class="mt-3 text-xs text-slate-500 font-bold animate-pulse"
+                >Processing Map...</span
               >
             </div>
 
             <div
-              v-else-if="!pdfExists || !pdfImageUrl"
-              class="flex flex-col items-center justify-center opacity-40 text-slate-400 w-full h-full"
+              v-if="!pdfImageUrl"
+              class="flex flex-col items-center justify-center text-slate-400 w-full h-full transition-opacity duration-300"
+              :class="{ 'opacity-0': isImageLoading, 'opacity-40': !isImageLoading }"
             >
               <i class="pi pi-circle text-6xl mb-3 opacity-20"></i>
               <span class="text-xs">No Map Image Available</span>
             </div>
 
-            <div v-else class="w-full h-full relative">
-              <img :src="pdfImageUrl" class="w-full h-full object-contain" />
-              <div class="absolute inset-0 pointer-events-none opacity-40">
+            <div v-else class="w-full h-full relative fade-in flex items-center justify-center">
+              <img 
+                :src="pdfImageUrl" 
+                class="w-full h-full object-contain rounded-full" 
+              />
+              <div class="absolute inset-0 pointer-events-none rounded-full overflow-hidden">
                 <div
                   class="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 transform -translate-x-1/2"
                 ></div>
@@ -732,15 +741,14 @@
 
           <div
             v-if="selectedRow && pdfExists"
-            class="absolute bottom-4 bg-black/70 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-md font-mono shadow-lg border border-white/10"
+            class="absolute bottom-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full backdrop-blur-md font-mono shadow-lg border border-white/10 z-30"
           >
-            {{ selectedRow.lotId }} #{{ selectedRow.waferId }} (PT:
-            {{ selectedPointIdx + 1 }})
+            {{ selectedRow.lotId }} W{{ selectedRow.waferId }} #{{ selectedPointValue }}
           </div>
         </div>
 
         <div
-          class="h-[250px] bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden shrink-0"
+          class="flex-1 min-h-0 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden shrink-0"
         >
           <div
             class="flex items-center gap-2 p-2 text-sm font-bold border-b border-slate-100 dark:border-zinc-800 text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-zinc-900"
@@ -749,48 +757,39 @@
           </div>
 
           <div class="flex-1 overflow-auto p-0 relative">
+            
             <div
-              v-if="!selectedRow || selectedPointIdx === -1"
+              v-if="isSpectrumLoading"
+              class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 z-10"
+            >
+              <ProgressSpinner style="width: 25px; height: 25px" />
+              <span class="mt-2 text-xs text-slate-500">Loading Spectrum...</span>
+            </div>
+
+            <AmChart
+              v-else-if="spectrumData.length > 0"
+              chartType="LineChart"
+              :data="spectrumData"
+              :config="spectrumConfig"
+              height="100%"
+              :isDarkMode="false"
+            />
+            
+            <div
+              v-else-if="selectedPointIdx !== -1"
+              class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60"
+            >
+              <i class="pi pi-exclamation-circle text-3xl mb-2"></i>
+              <span class="text-xs">No Spectrum Data Available</span>
+            </div>
+
+            <div
+              v-else
               class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60"
             >
               <i class="pi pi-chart-line text-3xl mb-2"></i>
               <span class="text-xs">Select a point to view spectrum</span>
             </div>
-
-            <table v-else class="w-full text-xs text-center border-collapse">
-              <thead
-                class="sticky top-0 bg-slate-100 dark:bg-zinc-800 text-slate-500 font-bold shadow-sm"
-              >
-                <tr>
-                  <th class="p-2 border-b dark:border-zinc-700">Wavelength</th>
-                  <th class="p-2 border-b dark:border-zinc-700">Intensity</th>
-                  <th class="p-2 border-b dark:border-zinc-700">Reflectance</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
-                <tr
-                  v-for="i in 10"
-                  :key="i"
-                  class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
-                >
-                  <td
-                    class="p-1.5 text-slate-600 dark:text-slate-400 font-mono"
-                  >
-                    {{ 400 + i * 40 }}
-                  </td>
-                  <td
-                    class="p-1.5 text-slate-600 dark:text-slate-400 font-mono"
-                  >
-                    {{ Math.random().toFixed(4) }}
-                  </td>
-                  <td
-                    class="p-1.5 text-slate-600 dark:text-slate-400 font-mono"
-                  >
-                    {{ (Math.random() * 100).toFixed(2) }}%
-                  </td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -821,6 +820,7 @@ import {
   type PointDataResponseDto,
 } from "@/api/wafer";
 import { equipmentApi } from "@/api/equipment";
+import AmChart from "@/components/common/AmChart.vue";
 
 // PrimeVue Components
 import Select from "primevue/select";
@@ -836,7 +836,6 @@ const showAdvanced = ref(false);
 const isLoading = ref(false);
 const hasSearched = ref(false);
 
-// Filter State
 const sites = ref<string[]>([]);
 const sdwts = ref<string[]>([]);
 const filters = reactive({
@@ -851,7 +850,6 @@ const filters = reactive({
   film: "",
 });
 
-// Options
 const eqpIds = ref<string[]>([]);
 const filteredEqpIds = ref<string[]>([]);
 const lotIds = ref<string[]>([]);
@@ -863,24 +861,38 @@ const stageRcps = ref<string[]>([]);
 const stageGroups = ref<string[]>([]);
 const films = ref<string[]>([]);
 
-// Data
 const flatData = ref<WaferFlatDataDto[]>([]);
 const totalRecords = ref(0);
 const selectedRow = ref<WaferFlatDataDto | null>(null);
 const first = ref(0);
 const rowsPerPage = ref(10);
 
-// Detail
 const isStatsLoading = ref(false);
 const isPointsLoading = ref(false);
 const isImageLoading = ref(false);
+const isSpectrumLoading = ref(false); 
+
 const statistics = ref<StatisticsDto | null>(null);
 const pointData = ref<PointDataResponseDto>({ headers: [], data: [] });
 const selectedPointIdx = ref(-1);
+const selectedPointValue = ref<number | string>("");
+
 const pdfExists = ref(false);
 const pdfImageUrl = ref<string | null>(null);
 
-// Tab State
+const spectrumData = ref<any[]>([]);
+const spectrumConfig = ref<any>({
+  xAxisType: "value",
+  xField: "wavelength",
+  yAxes: [
+    { title: "Values" }
+  ],
+  series: [
+    { name: "Exp", valueField: "exp", color: "#ef4444", tooltipText: "Exp: {valueY}" },
+    { name: "Gen", valueField: "gen", color: "#3b82f6", tooltipText: "Gen: {valueY}" }
+  ]
+});
+
 const activeTab = ref<"points" | "stats">("points");
 
 onMounted(async () => {
@@ -891,15 +903,11 @@ onMounted(async () => {
   }
 });
 
-// Cascade Logic: Site -> SDWT -> EqpId -> LotId -> WaferId
-
 const onSiteChange = async () => {
-  // Clear Child Filters
   filterStore.selectedSdwt = "";
   filters.eqpId = "";
   filters.lotId = "";
   filters.waferId = "";
-
   if (filterStore.selectedSite) {
     sdwts.value = await dashboardApi.getSdwts(filterStore.selectedSite);
   } else {
@@ -908,74 +916,34 @@ const onSiteChange = async () => {
 };
 
 const onSdwtChange = () => {
-  // Clear Child Filters
   filters.eqpId = "";
   filters.lotId = "";
   filters.waferId = "";
-
-  if (filterStore.selectedSdwt) {
-    loadEqpIds();
-  } else {
-    eqpIds.value = [];
-  }
+  if (filterStore.selectedSdwt) loadEqpIds();
+  else eqpIds.value = [];
 };
 
 const loadEqpIds = async () => {
   if (filterStore.selectedSdwt)
-    eqpIds.value = await equipmentApi.getEqpIds(
-      undefined,
-      filterStore.selectedSdwt
-    );
+    eqpIds.value = await equipmentApi.getEqpIds(undefined, filterStore.selectedSdwt);
 };
 
-const onEqpSelect = async (event: any) => {
-  const selectedEqp = event.value;
-  filters.eqpId = selectedEqp;
-  // Clear Child Filters
+const onEqpSelect = (event: any) => {
+  filters.eqpId = event.value;
   filters.lotId = "";
   filters.waferId = "";
-
-  if (!selectedEqp) return;
-
-  loadFilterOptions();
+  if (filters.eqpId) loadFilterOptions();
 };
 
-// Handle manual change or clear of EQP ID
-const onEqpChange = () => {
-  if (!filters.eqpId) {
-    clearEqpId();
-  }
-};
-
-const clearEqpId = () => {
-  filters.eqpId = "";
-  filters.lotId = "";
-  filters.waferId = "";
-};
-
-const onLotSelect = (event: any) => {
-  filters.lotId = event.value;
-  filters.waferId = ""; // Clear Wafer ID when Lot changes
-};
-
-const onLotChange = () => {
-  if (!filters.lotId) {
-    clearLotId();
-  }
-};
-
-const clearLotId = () => {
-  filters.lotId = "";
-  filters.waferId = "";
-};
-
-const onAdvancedFilterChange = () => {
-  loadFilterOptions();
-};
+const onEqpChange = () => { if (!filters.eqpId) clearEqpId(); };
+const clearEqpId = () => { filters.eqpId = ""; filters.lotId = ""; filters.waferId = ""; };
+const onLotSelect = (event: any) => { filters.lotId = event.value; filters.waferId = ""; };
+const onLotChange = () => { if (!filters.lotId) clearLotId(); };
+const clearLotId = () => { filters.lotId = ""; filters.waferId = ""; };
+const onAdvancedFilterChange = () => { loadFilterOptions(); };
 
 const loadFilterOptions = async () => {
   if (!filters.eqpId) return;
-
   const params = {
     eqpId: filters.eqpId,
     lotId: filters.lotId,
@@ -987,7 +955,6 @@ const loadFilterOptions = async () => {
     stageGroup: filters.stageGroup,
     film: filters.film,
   };
-
   const [lots, wafers, cRcps, sRcps, sGrps, filmsList] = await Promise.all([
     waferApi.getDistinctValues("lotids", params),
     waferApi.getDistinctValues("waferids", params),
@@ -996,45 +963,22 @@ const loadFilterOptions = async () => {
     waferApi.getDistinctValues("stagegroups", params),
     waferApi.getDistinctValues("films", params),
   ]);
-
-  lotIds.value = lots;
-  filteredLotIds.value = lots;
-  waferIds.value = wafers;
-  filteredWaferIds.value = wafers;
-  cassetteRcps.value = cRcps;
-  stageRcps.value = sRcps;
-  stageGroups.value = sGrps;
-  films.value = filmsList;
+  lotIds.value = lots; filteredLotIds.value = lots;
+  waferIds.value = wafers; filteredWaferIds.value = wafers;
+  cassetteRcps.value = cRcps; stageRcps.value = sRcps;
+  stageGroups.value = sGrps; films.value = filmsList;
 };
 
-const searchEqp = (e: any) => {
-  filteredEqpIds.value = eqpIds.value.filter((id) =>
-    id.toLowerCase().includes(e.query.toLowerCase())
-  );
-};
-const searchLot = (e: any) => {
-  const query = e.query.toLowerCase();
-  filteredLotIds.value = query
-    ? lotIds.value.filter((id) => id.toLowerCase().includes(query))
-    : lotIds.value;
-};
-const searchWafer = (e: any) => {
-  const query = e.query.toLowerCase();
-  filteredWaferIds.value = query
-    ? waferIds.value.filter((id) => id.toLowerCase().includes(query))
-    : waferIds.value;
-};
+const searchEqp = (e: any) => { filteredEqpIds.value = eqpIds.value.filter((id) => id.toLowerCase().includes(e.query.toLowerCase())); };
+const searchLot = (e: any) => { const query = e.query.toLowerCase(); filteredLotIds.value = query ? lotIds.value.filter((id) => id.toLowerCase().includes(query)) : lotIds.value; };
+const searchWafer = (e: any) => { const query = e.query.toLowerCase(); filteredWaferIds.value = query ? waferIds.value.filter((id) => id.toLowerCase().includes(query)) : waferIds.value; };
 
-const searchData = async () => {
-  first.value = 0;
-  await loadDataGrid();
-};
+const searchData = async () => { first.value = 0; await loadDataGrid(); };
 
 const loadDataGrid = async () => {
   isLoading.value = true;
   hasSearched.value = true;
   selectedRow.value = null;
-
   try {
     const res = await waferApi.getFlatData({
       eqpId: filters.eqpId,
@@ -1056,28 +1000,10 @@ const loadDataGrid = async () => {
   }
 };
 
-const onRowsChange = () => {
-  first.value = 0;
-  loadDataGrid();
-};
-const prevPage = () => {
-  if (first.value > 0) {
-    first.value -= rowsPerPage.value;
-    loadDataGrid();
-  }
-};
-const nextPage = () => {
-  if (first.value + rowsPerPage.value < totalRecords.value) {
-    first.value += rowsPerPage.value;
-    loadDataGrid();
-  }
-};
-const lastPage = () => {
-  first.value =
-    Math.floor(Math.max(totalRecords.value - 1, 0) / rowsPerPage.value) *
-    rowsPerPage.value;
-  loadDataGrid();
-};
+const onRowsChange = () => { first.value = 0; loadDataGrid(); };
+const prevPage = () => { if (first.value > 0) first.value -= rowsPerPage.value; loadDataGrid(); };
+const nextPage = () => { if (first.value + rowsPerPage.value < totalRecords.value) first.value += rowsPerPage.value; loadDataGrid(); };
+const lastPage = () => { first.value = Math.floor(Math.max(totalRecords.value - 1, 0) / rowsPerPage.value) * rowsPerPage.value; loadDataGrid(); };
 
 const onRowSelect = async (event: any) => {
   const row = event.data;
@@ -1087,18 +1013,13 @@ const onRowSelect = async (event: any) => {
   pdfExists.value = false;
   pdfImageUrl.value = null;
   selectedPointIdx.value = -1;
+  selectedPointValue.value = ""; 
   statistics.value = null;
   pointData.value = { headers: [], data: [] };
+  spectrumData.value = [];
 
   try {
-    const params = {
-      ...row,
-      eqpId: row.eqpId,
-      lotId: row.lotId,
-      waferId: row.waferId,
-      servTs: row.servTs,
-    };
-
+    const params = { ...row, eqpId: row.eqpId, lotId: row.lotId, waferId: row.waferId, servTs: row.servTs };
     const [stats, pts, pdfCheck] = await Promise.all([
       waferApi.getStatistics(params),
       waferApi.getPointData(params),
@@ -1115,165 +1036,126 @@ const onRowSelect = async (event: any) => {
   }
 };
 
-// ▼▼▼ [핵심 수정] Base64 이미지 데이터를 비동기적으로 가져와 로드 상태를 관리합니다. ▼▼▼
 const loadPointImage = async (idx: number) => {
+  const pointValue = idx; 
+  
   if (!pdfExists.value || !selectedRow.value) return;
-
   isImageLoading.value = true;
   pdfImageUrl.value = null;
-  selectedPointIdx.value = idx;
 
   try {
-    const base64 = await waferApi.getPdfImageBase64(
-      selectedRow.value.eqpId,
-      selectedRow.value.dateTime, // Image API는 EQP Time (dateTime)을 사용하는 것이 일반적이지만, 현재 백엔드는 servTs를 사용하도록 가이드됨. 백엔드에서 servTs로 수정되었으므로, 여기서는 프론트엔드에서 사용 가능한 dateTime을 사용합니다.
-      idx
-    );
-    // Base64 문자열 앞에 MIME 타입 접두사를 붙여 img src로 사용합니다.
+    const base64 = await waferApi.getPdfImageBase64(selectedRow.value.eqpId, selectedRow.value.dateTime, pointValue);
     pdfImageUrl.value = `data:image/png;base64,${base64}`;
   } catch (error) {
-    console.error("Failed to load PDF image:", error);
-    // 이미지 로드 실패 시 No Map Image Available 메시지를 표시하도록 URL을 null로 유지합니다.
-    pdfImageUrl.value = null; 
+    pdfImageUrl.value = null;
   } finally {
     isImageLoading.value = false;
   }
 };
 
-// ▼▼▼ [수정] onPointClick에서 loadPointImage를 호출하도록 변경 ▼▼▼
-const onPointClick = (idx: number) => {
-  if (pdfExists.value && selectedRow.value) {
-    loadPointImage(idx);
-  } else {
-    // PDF가 존재하지 않으면 이미지를 초기화하고 로딩 상태를 해제합니다.
-    selectedPointIdx.value = idx;
-    pdfImageUrl.value = null;
+const loadSpectrumData = async (pointValue: number) => {
+  if (!selectedRow.value) return;
+  spectrumData.value = [];
+  isSpectrumLoading.value = true;
+  
+  try {
+    const rawData = await waferApi.getSpectrum({
+      eqpId: selectedRow.value.eqpId,
+      ts: selectedRow.value.dateTime, // [수정] servTs -> ts로 변경
+      lotId: selectedRow.value.lotId,
+      waferId: selectedRow.value.waferId,
+      pointNumber: pointValue
+    });
+
+    if (rawData && rawData.length > 0) {
+      const expData = rawData.find(d => d.class === 'exp');
+      const genData = rawData.find(d => d.class === 'gen');
+      const baseWavelengths = expData?.wavelengths || genData?.wavelengths || [];
+      
+      const chartData = baseWavelengths.map((wl, i) => {
+        return {
+          wavelength: wl,
+          exp: expData?.values[i] || null,
+          gen: genData?.values[i] || null
+        };
+      });
+      
+      spectrumData.value = chartData;
+    }
+  } catch (e) {
+    console.error("Failed to load spectrum data", e);
+  } finally {
+    isSpectrumLoading.value = false;
   }
 };
 
+const onPointClick = (idx: number) => {
+  let pointValue = idx + 1; 
+  
+  if (pointData.value && pointData.value.headers && pointData.value.data) {
+    const pointColIndex = pointData.value.headers.findIndex(h => h.toLowerCase() === 'point');
+    const rowData = pointData.value.data[idx];
+    
+    if (pointColIndex > -1 && rowData) {
+      pointValue = Number(rowData[pointColIndex]);
+    }
+  }
+
+  selectedPointValue.value = pointValue;
+  selectedPointIdx.value = idx; // 하이라이트용 인덱스 업데이트
+
+  if (pdfExists.value && selectedRow.value) {
+    loadPointImage(pointValue); 
+  } else {
+    pdfImageUrl.value = null;
+  }
+
+  loadSpectrumData(pointValue);
+};
+
 const resetFilters = () => {
-  filters.eqpId = "";
-  filters.lotId = "";
-  filters.waferId = "";
-  filters.cassetteRcp = "";
-  filters.stageRcp = "";
-  filters.stageGroup = "";
-  filters.film = "";
-  flatData.value = [];
-  selectedRow.value = null;
-  hasSearched.value = false;
-  first.value = 0;
+  filters.eqpId = ""; filters.lotId = ""; filters.waferId = ""; filters.cassetteRcp = ""; filters.stageRcp = ""; filters.stageGroup = ""; filters.film = "";
+  flatData.value = []; selectedRow.value = null; hasSearched.value = false; first.value = 0; spectrumData.value = [];
 };
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
   const d = new Date(dateStr);
-  const yy = d.getUTCFullYear().toString().slice(2);
-  const MM = String(d.getUTCMonth() + 1).padStart(2, "0"); // 월
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const HH = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");   // 분
-  const ss = String(d.getUTCSeconds()).padStart(2, "0");
-  
-  // ▼▼▼ 반환 문자열에 ${MM}이 포함되어야 합니다. ▼▼▼
-  return `${yy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
+  return `${d.getUTCFullYear().toString().slice(2)}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")} ${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}:${String(d.getUTCSeconds()).padStart(2,"0")}`;
 };
-
-const fmt = (num: number | null | undefined, prec: number = 3) => {
-  if (num === null || num === undefined) return "0.".padEnd(prec + 2, "0");
-  return num.toFixed(prec);
-};
+const fmt = (num: number | null | undefined, prec: number = 3) => (num === null || num === undefined) ? "0.".padEnd(prec + 2, "0") : num.toFixed(prec);
 </script>
 
 <style scoped>
-/* Table Styles */
-:deep(.p-datatable-thead > tr > th) {
-  @apply font-extrabold text-xs text-slate-500 dark:text-slate-400 bg-transparent uppercase tracking-wider py-3 border-b border-slate-200 dark:border-zinc-700;
-}
-:deep(.p-datatable-tbody > tr > td) {
-  @apply py-1 px-3 text-[12px] text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-zinc-800/50;
-}
-:deep(.dark .p-datatable-tbody > tr:hover) {
-  @apply !bg-[#27272a] !text-white;
-}
+:deep(.p-datatable-thead > tr > th) { @apply font-extrabold text-xs text-slate-500 dark:text-slate-400 bg-transparent uppercase tracking-wider py-3 border-b border-slate-200 dark:border-zinc-700; }
+:deep(.p-datatable-tbody > tr > td) { @apply py-1 px-3 text-[12px] text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-zinc-800/50; }
+:deep(.dark .p-datatable-tbody > tr:hover) { @apply !bg-[#27272a] !text-white; }
 
 /* Dropdown & Input Styles */
-:deep(.p-select),
-:deep(.custom-dropdown) {
-  @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors;
+:deep(.p-select), :deep(.custom-dropdown) { @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors; }
+:deep(.custom-dropdown .p-select-label) { @apply text-[13px] py-[5px] px-3; }
+:deep(.custom-input-text.small) { @apply !text-[13px] !p-1 !h-7 !bg-transparent !border-0; }
+:deep(.date-picker .p-inputtext) { @apply !text-[13px] !py-1 !px-2 !h-7; }
+:deep(.p-select-clear-icon), :deep(.p-datepicker-clear-icon) { @apply text-[9px] text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300; }
+:deep(.custom-dropdown.small) { @apply h-7; }
+:deep(.custom-dropdown:hover) { @apply !bg-slate-200 dark:!bg-zinc-800; }
+:deep(.p-select-dropdown) { @apply text-slate-400 dark:text-zinc-500 w-6; }
+:deep(.p-select-dropdown svg) { @apply w-3 h-3; }
+
+/* [수정] AutoComplete List Item Font Size Fix */
+:deep(.p-autocomplete-option),
+:deep(.p-autocomplete-item) {
+  @apply !text-[11px] !py-1.5 !px-2.5; 
 }
 
-/* Select Label Font */
-:deep(.custom-dropdown .p-select-label) {
-  @apply text-[13px] py-[5px] px-3;
-}
-
-/* AutoComplete Input Font & Padding */
-:deep(.custom-input-text.small) {
-  @apply !text-[13px] !p-1 !h-7 !bg-transparent !border-0;
-}
-
-/* DatePicker Input Font */
-:deep(.date-picker .p-inputtext) {
-  @apply !text-[13px] !py-1 !px-2 !h-7;
-}
-
-/* Clear Icon in Select/DatePicker */
-:deep(.p-select-clear-icon),
-:deep(.p-datepicker-clear-icon) {
-  @apply text-[9px] text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300;
-}
-
-:deep(.custom-dropdown.small) {
-  @apply h-7;
-}
-
-:deep(.custom-dropdown:hover) {
-  @apply !bg-slate-200 dark:!bg-zinc-800;
-}
-
-/* Dropdown Icon */
-:deep(.p-select-dropdown) {
-  @apply text-slate-400 dark:text-zinc-500 w-6;
-}
-:deep(.p-select-dropdown svg) {
-  @apply w-3 h-3;
-}
-
-.animate-slide-left {
-  animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-@keyframes slideLeft {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+.animate-slide-left { animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes slideLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <style>
-.custom-dropdown-panel.small .p-select-option {
-  padding: 6px 10px !important;
-  font-size: 11px !important;
-}
-/* AutoComplete 드롭다운 옵션 글자 크기 */
+.custom-dropdown-panel.small .p-select-option,
 .custom-dropdown-panel.small .p-autocomplete-option,
 .custom-dropdown-panel.small .p-autocomplete-item {
   padding: 6px 10px !important;
@@ -1284,4 +1166,3 @@ const fmt = (num: number | null | undefined, prec: number = 3) => {
   font-size: 11px !important;
 }
 </style>
-
