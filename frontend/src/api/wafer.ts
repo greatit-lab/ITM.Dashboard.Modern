@@ -62,7 +62,6 @@ export const waferApi = {
 
   // 통계 데이터 조회
   getStatistics: async (params: any) => {
-    // [수정] URL 변경: /Statistics -> /WaferData/statistics
     const { data } = await apiClient.get<StatisticsDto>(
       "/WaferData/statistics",
       {
@@ -82,30 +81,42 @@ export const waferApi = {
   },
 
   // PDF 존재 여부 확인
-  checkPdf: async (eqpId: string, dateTime: string) => {
-    // dateTime은 Date 객체일 수 있으므로 문자열로 변환
+  checkPdf: async (eqpId: string, servTs: string) => {
+    // servTs는 Date 객체일 수 있으므로 문자열로 변환
     const dt =
-      typeof dateTime === "string"
-        ? dateTime
-        : (dateTime as Date).toISOString();
+      typeof servTs === "string"
+        ? servTs
+        : (servTs as unknown as Date).toISOString();
 
     const { data } = await apiClient.get<{ exists: boolean }>(
       "/WaferData/checkpdf",
-      { params: { eqpId, servTs: dt } } // [수정] dateTime -> servTs (백엔드 DTO와 일치)
+      { params: { eqpId, servTs: dt } }
     );
     return data.exists;
   },
 
-  // PDF 이미지 URL 생성 (img src용)
-  getPdfImageUrl: (eqpId: string, dateTime: string, pointNumber: number) => {
-    // dateTime 문자열 처리
+  // ▼▼▼ [수정] PDF 이미지 Base64 데이터 요청 및 반환 (async) ▼▼▼
+  getPdfImageBase64: async (
+    eqpId: string,
+    dateTime: string,
+    pointNumber: number
+  ) => {
     const dt =
       typeof dateTime === "string"
         ? dateTime
-        : (dateTime as Date).toISOString();
+        : (dateTime as unknown as Date).toISOString();
 
-    return `http://localhost:3000/api/WaferData/pdfimage?eqpid=${encodeURIComponent(
-      eqpId
-    )}&dateTime=${encodeURIComponent(dt)}&pointNumber=${pointNumber}`;
+    const params = {
+      eqpId,
+      dateTime: dt,
+      pointNumber,
+    };
+    
+    // 서버가 Base64 문자열만 반환하도록 기대
+    const { data } = await apiClient.get<string>("/WaferData/pdfimage", {
+      params,
+    });
+
+    return data;
   },
 };
