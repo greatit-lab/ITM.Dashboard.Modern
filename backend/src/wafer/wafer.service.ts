@@ -1,7 +1,9 @@
 // backend/src/wafer/wafer.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class WaferQueryParams {
   eqpId?: string;
@@ -16,6 +18,8 @@ export class WaferQueryParams {
   page?: string | number;
   pageSize?: string | number;
   servTs?: string | Date;
+  dateTime?: string | Date; // WaferController에서 추가됨
+  pointNumber?: string | number; // WaferController에서 추가됨
 }
 
 interface StatsRawResult {
@@ -75,27 +79,64 @@ export class WaferService {
       film: film || undefined,
     };
 
-    const [total, items] = await this.prisma.$transaction([
-      this.prisma.plgWfFlat.count({ where }),
-      this.prisma.plgWfFlat.findMany({
-        where,
-        take: Number(pageSize),
-        skip: Number(page) * Number(pageSize),
-        orderBy: { servTs: 'desc' },
-        distinct: ['eqpid', 'servTs'],
-        select: {
-          eqpid: true,
-          lotid: true,
-          waferid: true,
-          servTs: true,
-          datetime: true, // EQP Time
-          cassettercp: true,
-          stagercp: true,
-          stagegroup: true,
-          film: true,
-        },
-      }),
+    // 1. Total Count (유니크 그룹 개수 계산)
+    const uniqueGroupsPromise = this.prisma.plgWfFlat.groupBy({
+      by: [
+        'eqpid', 
+        'servTs', 
+        'lotid', 
+        'waferid', 
+        'cassettercp', 
+        'stagercp', 
+        'stagegroup', 
+        'film',
+      ],
+      where,
+      _count: {
+        _all: true,
+      },
+    });
+
+    // 2. Items 조회 (페이지네이션 적용)
+    const itemsPromise = this.prisma.plgWfFlat.findMany({
+      where,
+      take: Number(pageSize),
+      skip: Number(page) * Number(pageSize),
+      // [최종 수정] 정렬 순서: 최신순(servTs desc) + WaferID 순서(waferid asc)
+      orderBy: [
+        { servTs: 'desc' }, 
+        { waferid: 'asc' }, 
+      ],
+      // [최종 수정] DISTINCT 필드: datetime 제외
+      distinct: [
+        'eqpid',
+        'servTs',
+        'lotid',
+        'waferid',
+        'cassettercp',
+        'stagercp',
+        'stagegroup',
+        'film',
+      ],
+      select: {
+        eqpid: true,
+        lotid: true,
+        waferid: true,
+        servTs: true,
+        datetime: true, // EQP Time
+        cassettercp: true,
+        stagercp: true,
+        stagegroup: true,
+        film: true,
+      },
+    });
+
+    const [uniqueGroups, items] = await this.prisma.$transaction([
+      uniqueGroupsPromise,
+      itemsPromise,
     ]);
+
+    const total = uniqueGroups.length; // <-- 유니크 그룹의 개수를 최종 Total Count로 사용
 
     return {
       totalItems: total,
@@ -111,6 +152,50 @@ export class WaferService {
         film: i.film,
       })),
     };
+  }
+  
+  // ▼▼▼ [Wafer Map 로직] PDF 이미지 경로를 찾고 Base64 데이터를 반환하는 메서드 ▼▼▼
+  async getPdfImage(params: WaferQueryParams): Promise<string> {
+    const { eqpId, dateTime, pointNumber } = params;
+
+    if (!eqpId || !dateTime) {
+      throw new InternalServerErrorException('EQP ID and DateTime are required for PDF image.');
+    }
+
+    // 1. DB에서 file_uri 조회 (PDF 존재 여부 확인)
+    // servTs 대신 dateTime을 사용합니다.
+    const pdfCheckResult = await this.checkPdf({ eqpId, servTs: dateTime }); 
+    if (!pdfCheckResult.exists || !pdfCheckResult.url) {
+      throw new NotFoundException('PDF file URI not found in database.');
+    }
+    
+    // 2. [핵심 로직] Base64 반환 (파일 시스템 목업)
+    try {
+        // [주의] 이 경로 추론 로직은 프로님의 실제 파일 구조에 맞게 수정해야 합니다.
+        // C# 프로젝트의 로직 대체: PDF 파일을 찾아 해당 페이지를 PNG로 변환한 Base64를 반환해야 합니다.
+        // 현재는 'wafer_maps' 폴더에 이미 변환된 PNG가 있다고 가정합니다.
+        
+        // dateTime을 'yyyymmdd' 형식으로 변환 (파일 이름의 일부로 사용 가정)
+        const dt = new Date(dateTime).toISOString();
+        const datePart = dt.substring(0, 10).replace(/-/g, '');
+        
+        // 예시 파일 경로: ${eqpId}_${datePart}_pt${pointNumber}.png
+        // 현재 작업 디렉토리(process.cwd())에 'wafer_maps' 폴더가 있다고 가정
+        const mockFilePath = path.join(process.cwd(), 'wafer_maps', `${eqpId}_${datePart}_pt${pointNumber}.png`);
+
+        // 파일 읽기 및 Base64 인코딩
+        const imageBuffer = fs.readFileSync(mockFilePath);
+        return imageBuffer.toString('base64');
+        
+    } catch (e) {
+        // 파일 읽기 실패 (404)
+        if (e.code === 'ENOENT') {
+            throw new NotFoundException(`Image file not found for point #${pointNumber}.`);
+        }
+        // 그 외 서버 오류
+        console.error('PDF image processing failed:', e);
+        throw new InternalServerErrorException('Server failed to read or process the image file.');
+    }
   }
 
   async getStatistics(params: WaferQueryParams) {
