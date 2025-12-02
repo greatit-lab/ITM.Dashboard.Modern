@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as path from 'path'; // path import는 파일 시스템 경로 구성에 필요합니다.
 
 export class WaferQueryParams {
   eqpId?: string;
@@ -171,25 +171,21 @@ export class WaferService {
     
     // 2. [핵심 로직] Base64 반환 (파일 시스템 목업)
     try {
-        // [주의] 이 경로 추론 로직은 프로님의 실제 파일 구조에 맞게 수정해야 합니다.
-        // C# 프로젝트의 로직 대체: PDF 파일을 찾아 해당 페이지를 PNG로 변환한 Base64를 반환해야 합니다.
-        // 현재는 'wafer_maps' 폴더에 이미 변환된 PNG가 있다고 가정합니다.
-        
-        // dateTime을 'yyyymmdd' 형식으로 변환 (파일 이름의 일부로 사용 가정)
+        // [주의] 이 경로는 프로님의 실제 파일 구조에 맞게 수정해야 합니다.
         const dt = new Date(dateTime).toISOString();
         const datePart = dt.substring(0, 10).replace(/-/g, '');
         
-        // 예시 파일 경로: ${eqpId}_${datePart}_pt${pointNumber}.png
-        // 현재 작업 디렉토리(process.cwd())에 'wafer_maps' 폴더가 있다고 가정
         const mockFilePath = path.join(process.cwd(), 'wafer_maps', `${eqpId}_${datePart}_pt${pointNumber}.png`);
 
-        // 파일 읽기 및 Base64 인코딩
         const imageBuffer = fs.readFileSync(mockFilePath);
         return imageBuffer.toString('base64');
         
     } catch (e) {
+        // ▼▼▼ [오류 수정] 'e.code' 접근 시 TypeScript 안전성 검사 통과를 위해 타입 단언 사용 ▼▼▼
+        const error = e as { code?: string }; 
+        
         // 파일 읽기 실패 (404)
-        if (e.code === 'ENOENT') {
+        if (error.code === 'ENOENT') { 
             throw new NotFoundException(`Image file not found for point #${pointNumber}.`);
         }
         // 그 외 서버 오류
