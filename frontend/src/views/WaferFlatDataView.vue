@@ -679,12 +679,12 @@
 
       <div class="w-[450px] shrink-0 flex flex-col gap-4 h-full">
         <div
-          class="h-[415px] shrink-0 rounded-xl dark:border-zinc-800 relative flex flex-col items-center justify-center p-4 overflow-hidden"
+          class="h-[420px] shrink-0 rounded-xl dark:border-zinc-800 relative flex flex-col items-center justify-center p-5 overflow-hidden"
         >
           <div
-            class="absolute z-10 flex items-center text-sm font-bold top-3 left-4 text-slate-700 dark:text-slate-200"
+            class="absolute top-3 left-4 text-sm font-bold text-slate-700 dark:text-slate-200 z-10 flex items-center"
           >
-            <i class="mr-2 text-teal-500 pi pi-image"></i> Wafer Map
+            <i class="pi pi-image mr-2 text-teal-500"></i> Wafer Map
           </div>
 
           <div
@@ -693,14 +693,14 @@
             <transition name="fade">
               <div
                 v-if="isImageLoading"
-                class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/70 dark:bg-black/60 backdrop-blur-sm"
+                class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 dark:bg-black/60 backdrop-blur-sm z-20"
               >
                 <ProgressSpinner
                   style="width: 40px; height: 40px"
                   strokeWidth="4"
                 />
                 <span
-                  class="mt-3 text-xs font-bold text-slate-500 animate-pulse"
+                  class="mt-3 text-xs text-slate-500 font-bold animate-pulse"
                 >
                   Processing Map…
                 </span>
@@ -710,9 +710,9 @@
             <transition name="fade">
               <div
                 v-if="!pdfImageUrl && !isImageLoading"
-                class="absolute inset-0 flex flex-col items-center justify-center opacity-50 pointer-events-none text-slate-400"
+                class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 opacity-50 pointer-events-none"
               >
-                <i class="mb-3 text-6xl pi pi-circle opacity-20"></i>
+                <i class="pi pi-circle text-6xl mb-3 opacity-20"></i>
                 <span class="text-xs">No Map Image Available</span>
               </div>
             </transition>
@@ -721,26 +721,26 @@
               <img
                 v-if="pdfImageUrl && !isImageLoading"
                 :src="pdfImageUrl"
-                class="absolute inset-0 object-contain w-full h-full rounded-full"
+                class="absolute inset-0 w-full h-full object-contain rounded-full"
               />
             </transition>
 
             <div
               v-if="pdfImageUrl && selectedPointIdx !== -1"
-              class="absolute inset-0 overflow-hidden rounded-full pointer-events-none"
+              class="absolute inset-0 pointer-events-none rounded-full overflow-hidden"
             >
               <div
-                class="absolute top-0 bottom-0 w-px transform -translate-x-1/2 bg-red-500 left-1/2"
+                class="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 transform -translate-x-1/2"
               ></div>
               <div
-                class="absolute left-0 right-0 h-px transform -translate-y-1/2 bg-red-500 top-1/2"
+                class="absolute left-0 right-0 top-1/2 h-px bg-red-500 transform -translate-y-1/2"
               ></div>
             </div>
           </div>
 
           <div
             v-if="pdfExists && selectedPointIdx !== -1"
-            class="absolute z-30 px-3 py-1 font-mono text-xs text-white border rounded-full shadow-lg bottom-4 bg-black/70 backdrop-blur-md border-white/10"
+            class="absolute bottom-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full backdrop-blur-md font-mono shadow-lg border border-white/10 z-30"
           >
             {{ selectedRow?.lotId }} W{{ selectedRow?.waferId }} #{{
               selectedPointValue
@@ -751,17 +751,20 @@
         <div
           class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm p-4 flex flex-col h-[315px]"
         >
-          <div class="relative flex items-center justify-between mb-2 shrink-0">
+          <div
+            class="flex items-center justify-between relative mb-2 shrink-0"
+          >
             <h2
-              class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"
+              class="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2"
             >
-              <i class="text-teal-500 pi pi-wave-pulse"></i>
+              <i class="pi pi-wave-pulse text-teal-500"></i>
               Wave Spectrum
             </h2>
 
             <span
               v-if="selectedPointValue && selectedRow"
-              class="absolute right-0 text-xs font-mono px-2 py-0.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded border border-teal-100 dark:border-teal-800"
+              class="absolute right-0 text-xs font-mono px-2 py-0.5 bg-teal-50 dark:bg-teal-900/30 
+                     text-teal-700 dark:text-teal-300 rounded border border-teal-100 dark:border-teal-800"
             >
               {{ selectedRow.lotId }} W{{ selectedRow.waferId }} #{{
                 selectedPointValue
@@ -769,7 +772,7 @@
             </span>
           </div>
 
-          <div class="relative flex-1 w-full min-h-0 overflow-hidden">
+          <div class="relative flex-1 min-h-0 w-full overflow-hidden">
             <transition name="fade">
               <div
                 v-if="isSpectrumLoading"
@@ -780,7 +783,7 @@
                   strokeWidth="4"
                 />
                 <span
-                  class="mt-2 text-xs font-medium text-slate-500 animate-pulse"
+                  class="mt-2 text-xs text-slate-500 font-medium animate-pulse"
                   >Loading...</span
                 >
               </div>
@@ -790,7 +793,7 @@
               v-if="!isSpectrumLoading && spectrumData.length === 0"
               class="absolute inset-0 z-10 flex flex-col items-center justify-center text-slate-400"
             >
-              <i class="mb-2 text-3xl opacity-50 pi pi-chart-line"></i>
+              <i class="pi pi-chart-line text-3xl mb-2 opacity-50"></i>
               <span class="text-xs">
                 {{
                   selectedPointValue
@@ -800,7 +803,7 @@
               </span>
             </div>
 
-            <div v-show="spectrumData.length > 0" class="w-full h-full">
+            <div v-show="spectrumData.length > 0" class="h-full w-full">
               <AmChart
                 chartType="LineChart"
                 :data="spectrumData"
@@ -901,7 +904,6 @@ const pdfImageUrl = ref<string | null>(null);
 
 const spectrumData = ref<any[]>([]);
 
-// [추가] 다크모드 감지
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 onMounted(() => {
   const observer = new MutationObserver(() => {
@@ -913,7 +915,6 @@ onMounted(() => {
   });
 });
 
-// [수정] 스펙트럼 차트 설정 (Config)
 const spectrumConfig = ref<any>({
   xAxisType: "value",
   xField: "wavelength",
@@ -931,17 +932,14 @@ const spectrumConfig = ref<any>({
     {
       name: "EXP",
       valueField: "exp",
-      // [수정] 세련된 Vivid Red
-      color: "#FF5252",
+      color: "#F43F5E", // Vivid Red
       strokeWidth: 3,
-      // 툴팁 텍스트는 흰색 고정이므로 [bold] 태그만 사용
       tooltipText: "[bold]EXP[/]\n{valueX}nm: {valueY.formatNumber('#.00')}%",
     },
     {
       name: "GEN",
       valueField: "gen",
-      // [수정] 세련된 Vivid Blue
-      color: "#448AFF",
+      color: "#6366F1", // Vivid Blue
       strokeWidth: 3,
       strokeDasharray: [4, 4],
       tooltipText: "[bold]GEN[/]\n{valueX}nm: {valueY.formatNumber('#.00')}%",
@@ -953,30 +951,62 @@ const activeTab = ref<"points" | "stats">("points");
 
 onMounted(async () => {
   sites.value = await dashboardApi.getSites();
-  if (filterStore.selectedSite) {
-    sdwts.value = await dashboardApi.getSdwts(filterStore.selectedSite);
-    if (filterStore.selectedSdwt) loadEqpIds();
+
+  // [수정] LocalStorage에서 복원 로직 추가
+  const savedSite = localStorage.getItem("dashboard_site");
+  const savedSdwt = localStorage.getItem("dashboard_sdwt");
+
+  if (savedSite && sites.value.includes(savedSite)) {
+    filterStore.selectedSite = savedSite;
+    sdwts.value = await dashboardApi.getSdwts(savedSite);
+
+    if (savedSdwt) {
+      filterStore.selectedSdwt = savedSdwt;
+      await loadEqpIds();
+
+      // [추가] EQP ID 복원 로직
+      const savedEqpId = localStorage.getItem("dashboard_eqpid");
+      if (savedEqpId && eqpIds.value.includes(savedEqpId)) {
+        filters.eqpId = savedEqpId;
+        await loadFilterOptions();
+      }
+    }
   }
 });
 
 const onSiteChange = async () => {
+  // [수정] 변경 시 LocalStorage 업데이트
+  if (filterStore.selectedSite) {
+    localStorage.setItem("dashboard_site", filterStore.selectedSite);
+    sdwts.value = await dashboardApi.getSdwts(filterStore.selectedSite);
+  } else {
+    localStorage.removeItem("dashboard_site");
+    sdwts.value = [];
+  }
+
   filterStore.selectedSdwt = "";
+  localStorage.removeItem("dashboard_sdwt");
+  localStorage.removeItem("dashboard_eqpid"); // [추가]
+
   filters.eqpId = "";
   filters.lotId = "";
   filters.waferId = "";
-  if (filterStore.selectedSite) {
-    sdwts.value = await dashboardApi.getSdwts(filterStore.selectedSite);
-  } else {
-    sdwts.value = [];
-  }
 };
 
 const onSdwtChange = () => {
+  // [수정] 변경 시 LocalStorage 업데이트
+  if (filterStore.selectedSdwt) {
+    localStorage.setItem("dashboard_sdwt", filterStore.selectedSdwt);
+    loadEqpIds();
+  } else {
+    localStorage.removeItem("dashboard_sdwt");
+    eqpIds.value = [];
+  }
+
+  localStorage.removeItem("dashboard_eqpid"); // [추가]
   filters.eqpId = "";
   filters.lotId = "";
   filters.waferId = "";
-  if (filterStore.selectedSdwt) loadEqpIds();
-  else eqpIds.value = [];
 };
 
 const loadEqpIds = async () => {
@@ -989,6 +1019,7 @@ const loadEqpIds = async () => {
 
 const onEqpSelect = (event: any) => {
   filters.eqpId = event.value;
+  localStorage.setItem("dashboard_eqpid", filters.eqpId); // [추가]
   filters.lotId = "";
   filters.waferId = "";
   if (filters.eqpId) loadFilterOptions();
@@ -999,6 +1030,7 @@ const onEqpChange = () => {
 };
 const clearEqpId = () => {
   filters.eqpId = "";
+  localStorage.removeItem("dashboard_eqpid"); // [추가]
   filters.lotId = "";
   filters.waferId = "";
 };
@@ -1172,23 +1204,33 @@ const loadPointImage = async (pointValue: number) => {
   }
 };
 
-// [수정] Spectrum 데이터 로드 (10배 곱하기, 대소문자 무시, ts 기준)
 const loadSpectrumData = async (pointValue: number) => {
   if (!selectedRow.value) return;
+
+  console.log(`🔥 loadSpectrumData() point: ${pointValue}`);
 
   spectrumData.value = [];
   isSpectrumLoading.value = true;
 
   try {
-    const rawData = await waferApi.getSpectrum({
+    const params = {
       eqpId: selectedRow.value.eqpId,
       ts: selectedRow.value.dateTime,
       lotId: selectedRow.value.lotId,
       waferId: String(selectedRow.value.waferId),
       pointNumber: pointValue,
-    });
+    };
 
-    if (!rawData || rawData.length === 0) return;
+    console.log("🔥 Spectrum API params:", params);
+
+    const rawData = await waferApi.getSpectrum(params);
+
+    console.log("🔥 Spectrum API result:", rawData);
+
+    if (!rawData || rawData.length === 0) {
+      console.warn("No spectrum data received.");
+      return;
+    }
 
     const expData = rawData.find(
       (d) => d.class && d.class.toUpperCase() === "EXP"
@@ -1199,7 +1241,6 @@ const loadSpectrumData = async (pointValue: number) => {
 
     const base = expData?.wavelengths || genData?.wavelengths || [];
 
-    // [수정] 데이터 매핑 (값 * 100)
     spectrumData.value = base.map((wl: number, i: number) => {
       const expVal = expData?.values?.[i];
       const genVal = genData?.values?.[i];
@@ -1217,12 +1258,9 @@ const loadSpectrumData = async (pointValue: number) => {
   }
 };
 
-// [수정] Point 클릭 핸들러 (병렬 처리 및 안전한 접근 적용)
 const onPointClick = async (idx: number) => {
-  // 1. 기본값 설정
   let pointValue = idx + 1;
 
-  // 2. Point 값 추출
   if (pointData.value?.headers && pointData.value?.data?.[idx]) {
     const pointColIndex = pointData.value.headers.findIndex(
       (h) => h?.toLowerCase() === "point"
@@ -1237,11 +1275,9 @@ const onPointClick = async (idx: number) => {
     }
   }
 
-  // 3. UI 상태 업데이트
   selectedPointValue.value = pointValue;
   selectedPointIdx.value = idx;
 
-  // 4. 이미지 및 차트 데이터 병렬 로딩
   const tasks: Promise<void>[] = [];
 
   if (pdfExists.value && selectedRow.value) {
@@ -1260,6 +1296,16 @@ const onPointClick = async (idx: number) => {
 };
 
 const resetFilters = () => {
+  // [수정] Site, SDWT 및 LocalStorage 초기화
+  filterStore.selectedSite = "";
+  filterStore.selectedSdwt = "";
+  localStorage.removeItem("dashboard_site");
+  localStorage.removeItem("dashboard_sdwt");
+  localStorage.removeItem("dashboard_eqpid"); // [추가]
+
+  sdwts.value = [];
+  eqpIds.value = [];
+
   filters.eqpId = "";
   filters.lotId = "";
   filters.waferId = "";
@@ -1327,7 +1373,7 @@ const fmt = (num: number | null | undefined, prec: number = 3) =>
   @apply !bg-slate-200 dark:!bg-zinc-800;
 }
 
-/* [수정] 드롭다운 화살표 아이콘 및 버튼 스타일 수정 */
+/* 드롭다운 화살표 아이콘 및 버튼 스타일 수정 */
 :deep(.p-select-dropdown),
 :deep(.p-autocomplete-dropdown) {
   @apply text-slate-400 dark:text-zinc-500 w-6 !bg-transparent !border-0 !shadow-none;
@@ -1409,3 +1455,4 @@ table td {
   font-size: 11px !important;
 }
 </style>
+
