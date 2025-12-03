@@ -3,27 +3,23 @@
   <div
     class="min-h-full transition-colors duration-500 bg-[#F8FAFC] dark:bg-[#09090B] font-sans flex flex-col"
   >
-    <div
-      class="flex flex-col items-center justify-between gap-3 mb-4 md:flex-row"
-    >
-      <div class="flex items-center gap-3">
-        <div
-          class="flex items-center justify-center w-10 h-10 bg-white border shadow-sm rounded-xl dark:bg-zinc-900 border-slate-100 dark:border-zinc-800"
+    <div class="flex items-center gap-2 px-1 mb-2">
+      <div
+        class="flex items-center justify-center w-8 h-8 bg-white border rounded-lg shadow-sm dark:bg-zinc-900 border-slate-100 dark:border-zinc-800"
+      >
+        <i class="text-lg text-teal-600 pi pi-chart-pie dark:text-teal-400"></i>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <h1
+          class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white"
         >
-          <i
-            class="text-xl text-teal-600 pi pi-chart-pie dark:text-teal-400"
-          ></i>
-        </div>
-        <div>
-          <h1
-            class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white"
-          >
-            Wafer Flat Data
-          </h1>
-          <p class="text-slate-500 dark:text-slate-400 font-medium text-[10px]">
-            Detailed metrology data analysis.
-          </p>
-        </div>
+          Wafer Flat Data
+        </h1>
+        <span
+          class="text-slate-400 dark:text-slate-500 font-medium text-[11px]"
+        >
+          Detailed metrology data analysis.
+        </span>
       </div>
     </div>
 
@@ -473,12 +469,12 @@
                       v-for="(cell, ci) in row"
                       :key="ci"
                       v-show="
-                        pointData.headers[ci] !== 'datetime' &&
-                        pointData.headers[ci] !== 'serv_ts'
+                        pointData?.headers?.[ci] !== 'datetime' &&
+                        pointData?.headers?.[ci] !== 'serv_ts'
                       "
                       class="py-1.5 px-4 min-w-[80px]"
                       :class="[
-                        pointData.headers[ci].toLowerCase() === 'point'
+                        pointData?.headers?.[ci]?.toLowerCase() === 'point'
                           ? 'sticky left-0 z-10 text-left pl-4 font-bold bg-inherit'
                           : 'text-right',
                       ]"
@@ -682,117 +678,136 @@
       </div>
 
       <div class="w-[450px] shrink-0 flex flex-col gap-4 h-full">
-        <!-- 🔥 [수정된 Wafer Map 영역 - 높이 유지 + smooth 전환] -->
         <div
           class="h-[415px] shrink-0 rounded-xl dark:border-zinc-800 relative flex flex-col items-center justify-center p-4 overflow-hidden"
         >
           <div
-            class="absolute top-3 left-4 text-sm font-bold text-slate-700 dark:text-slate-200 z-10 flex items-center"
+            class="absolute z-10 flex items-center text-sm font-bold top-3 left-4 text-slate-700 dark:text-slate-200"
           >
-            <i class="pi pi-image mr-2 text-teal-500"></i> Wafer Map
+            <i class="mr-2 text-teal-500 pi pi-image"></i> Wafer Map
           </div>
-        
-          <!-- 🟩 이 div가 전체 높이를 유지하는 wrapper -->
+
           <div
-            class="relative h-full max-w-full aspect-square rounded-full border-4 border-slate-100 dark:border-zinc-700 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] overflow-hidden bg-slate-50 dark:bg-black flex items-center justify-center"
+            class="relative h-full w-auto aspect-square max-w-full rounded-full border-4 border-slate-100 dark:border-zinc-700 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] overflow-hidden bg-slate-50 dark:bg-black flex items-center justify-center"
           >
-            <!-- ⛔ 로딩 오버레이 -->
             <transition name="fade">
               <div
                 v-if="isImageLoading"
-                class="absolute inset-0 flex flex-col items-center justify-center
-                bg-white/70 dark:bg-black/60 backdrop-blur-sm z-20"
+                class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/70 dark:bg-black/60 backdrop-blur-sm"
               >
-                <ProgressSpinner style="width: 40px; height: 40px" strokeWidth="4" />
-                <span class="mt-3 text-xs text-slate-500 font-bold animate-pulse">
+                <ProgressSpinner
+                  style="width: 40px; height: 40px"
+                  strokeWidth="4"
+                />
+                <span
+                  class="mt-3 text-xs font-bold text-slate-500 animate-pulse"
+                >
                   Processing Map…
                 </span>
               </div>
             </transition>
-        
-            <!-- ❌ 이미지가 없을 때 placeholder (부모 높이 유지됨) -->
+
             <transition name="fade">
               <div
                 v-if="!pdfImageUrl && !isImageLoading"
-                class="absolute inset-0 flex flex-col items-center justify-center
-                text-slate-400 opacity-50 pointer-events-none"
+                class="absolute inset-0 flex flex-col items-center justify-center opacity-50 pointer-events-none text-slate-400"
               >
-                <i class="pi pi-circle text-6xl mb-3 opacity-20"></i>
+                <i class="mb-3 text-6xl pi pi-circle opacity-20"></i>
                 <span class="text-xs">No Map Image Available</span>
               </div>
             </transition>
-        
-            <!-- 🖼 이미지가 있을 때 -->
+
             <transition name="fade">
               <img
                 v-if="pdfImageUrl && !isImageLoading"
                 :src="pdfImageUrl"
-                class="absolute inset-0 w-full h-full object-contain rounded-full"
+                class="absolute inset-0 object-contain w-full h-full rounded-full"
               />
             </transition>
-        
-            <!-- 십자선 (항상 유지) -->
+
             <div
               v-if="pdfImageUrl && selectedPointIdx !== -1"
-              class="absolute inset-0 pointer-events-none rounded-full overflow-hidden"
+              class="absolute inset-0 overflow-hidden rounded-full pointer-events-none"
             >
-              <div class="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 transform -translate-x-1/2"></div>
-              <div class="absolute left-0 right-0 top-1/2 h-px bg-red-500 transform -translate-y-1/2"></div>
+              <div
+                class="absolute top-0 bottom-0 w-px transform -translate-x-1/2 bg-red-500 left-1/2"
+              ></div>
+              <div
+                class="absolute left-0 right-0 h-px transform -translate-y-1/2 bg-red-500 top-1/2"
+              ></div>
             </div>
           </div>
-        
-          <!-- Point Badge -->
+
           <div
             v-if="pdfExists && selectedPointIdx !== -1"
-            class="absolute bottom-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full backdrop-blur-md font-mono shadow-lg border border-white/10 z-30"
+            class="absolute z-30 px-3 py-1 font-mono text-xs text-white border rounded-full shadow-lg bottom-4 bg-black/70 backdrop-blur-md border-white/10"
           >
-            {{ selectedRow?.lotId }} W{{ selectedRow?.waferId }} #{{ selectedPointValue }}
+            {{ selectedRow?.lotId }} W{{ selectedRow?.waferId }} #{{
+              selectedPointValue
+            }}
           </div>
         </div>
 
         <div
-          class="flex-1 min-h-0 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden shrink-0"
+          class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm p-4 flex flex-col h-[315px]"
         >
-          <div
-            class="flex items-center gap-2 p-2 text-sm font-bold border-b border-slate-100 dark:border-zinc-800 text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-zinc-900"
-          >
-            <i class="pi pi-wave-pulse text-teal-500"></i> Wave Spectrum
+          <div class="relative flex items-center justify-between mb-2 shrink-0">
+            <h2
+              class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"
+            >
+              <i class="text-teal-500 pi pi-wave-pulse"></i>
+              Wave Spectrum
+            </h2>
+
+            <span
+              v-if="selectedPointValue && selectedRow"
+              class="absolute right-0 text-xs font-mono px-2 py-0.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded border border-teal-100 dark:border-teal-800"
+            >
+              {{ selectedRow.lotId }} W{{ selectedRow.waferId }} #{{
+                selectedPointValue
+              }}
+            </span>
           </div>
 
-          <div class="flex-1 overflow-auto p-0 relative">
-            <div
-              v-if="isSpectrumLoading"
-              class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 z-10"
-            >
-              <ProgressSpinner style="width: 25px; height: 25px" />
-              <span class="mt-2 text-xs text-slate-500"
-                >Loading Spectrum...</span
+          <div class="relative flex-1 w-full min-h-0 overflow-hidden">
+            <transition name="fade">
+              <div
+                v-if="isSpectrumLoading"
+                class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-[1px]"
               >
-            </div>
-
-            <AmChart
-              v-else-if="spectrumData.length > 0"
-              chartType="LineChart"
-              :data="spectrumData"
-              :config="spectrumConfig"
-              height="100%"
-              :isDarkMode="false"
-            />
-
-            <div
-              v-else-if="selectedPointIdx !== -1"
-              class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60"
-            >
-              <i class="pi pi-exclamation-circle text-3xl mb-2"></i>
-              <span class="text-xs">No Spectrum Data Available</span>
-            </div>
+                <ProgressSpinner
+                  style="width: 30px; height: 30px"
+                  strokeWidth="4"
+                />
+                <span
+                  class="mt-2 text-xs font-medium text-slate-500 animate-pulse"
+                  >Loading...</span
+                >
+              </div>
+            </transition>
 
             <div
-              v-else
-              class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60"
+              v-if="!isSpectrumLoading && spectrumData.length === 0"
+              class="absolute inset-0 z-10 flex flex-col items-center justify-center text-slate-400"
             >
-              <i class="pi pi-chart-line text-3xl mb-2"></i>
-              <span class="text-xs">Select a point to view spectrum</span>
+              <i class="mb-2 text-3xl opacity-50 pi pi-chart-line"></i>
+              <span class="text-xs">
+                {{
+                  selectedPointValue
+                    ? "No Spectrum Data Available"
+                    : "Select a Point to view spectrum data."
+                }}
+              </span>
+            </div>
+
+            <div v-show="spectrumData.length > 0" class="w-full h-full">
+              <AmChart
+                chartType="LineChart"
+                :data="spectrumData"
+                :config="spectrumConfig"
+                height="100%"
+                :isDarkMode="isDarkMode"
+              />
             </div>
           </div>
         </div>
@@ -1354,5 +1369,6 @@ table td {
   font-size: 11px !important;
 }
 </style>
+
 
 
