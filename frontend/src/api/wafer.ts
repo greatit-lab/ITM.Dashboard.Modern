@@ -7,7 +7,8 @@ const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// DTO 정의
+// --- DTO 정의 ---
+
 export interface WaferFlatDataDto {
   eqpId: string;
   lotId: string;
@@ -42,16 +43,31 @@ export interface PointDataResponseDto {
   data: any[][];
 }
 
-// [추가] 스펙트럼 데이터 DTO
+// 기존 스펙트럼 데이터 DTO (개별 포인트 상세 조회용)
 export interface SpectrumDto {
-  class: string;
+  class: string; // 'exp' | 'gen'
   wavelengths: number[];
   values: number[];
 }
 
-// API 함수
+// [신규] 시뮬레이션 정합성(Residual) 맵 DTO
+export interface ResidualMapDto {
+  point: number;
+  x: number;
+  y: number;
+  residual: number; // EXP와 GEN의 차이 총합
+}
+
+// [신규] Golden Spectrum (기준 파형) DTO
+export interface GoldenSpectrumDto {
+  wavelengths: number[];
+  values: number[];
+}
+
+// --- API 함수 ---
+
 export const waferApi = {
-  // 필터 데이터 조회
+  // 1. 필터 데이터 조회 (Lot, Wafer, Recipe 목록 등)
   getDistinctValues: async (field: string, params: any) => {
     const { data } = await apiClient.get<string[]>(`/Filters/${field}`, {
       params,
@@ -59,7 +75,7 @@ export const waferApi = {
     return data;
   },
 
-  // 메인 그리드 데이터 조회
+  // 2. 메인 그리드 데이터 조회 (Wafer 목록)
   getFlatData: async (params: any) => {
     const { data } = await apiClient.get<{
       items: WaferFlatDataDto[];
@@ -68,7 +84,7 @@ export const waferApi = {
     return data;
   },
 
-  // 통계 데이터 조회
+  // 3. 통계 데이터 조회
   getStatistics: async (params: any) => {
     const { data } = await apiClient.get<StatisticsDto>(
       "/WaferData/statistics",
@@ -79,7 +95,7 @@ export const waferApi = {
     return data;
   },
 
-  // 포인트 데이터 조회
+  // 4. 포인트 데이터 조회 (Raw Data Table)
   getPointData: async (params: any) => {
     const { data } = await apiClient.get<PointDataResponseDto>(
       "/WaferData/pointdata",
@@ -88,7 +104,7 @@ export const waferApi = {
     return data;
   },
 
-  // PDF 존재 여부 확인
+  // 5. PDF 존재 여부 확인
   checkPdf: async (eqpId: string, servTs: string) => {
     const dt =
       typeof servTs === "string"
@@ -102,7 +118,7 @@ export const waferApi = {
     return data.exists;
   },
 
-  // PDF 이미지 Base64 데이터 요청
+  // 6. PDF 이미지 Base64 데이터 요청
   getPdfImageBase64: async (
     eqpId: string,
     dateTime: string,
@@ -126,11 +142,30 @@ export const waferApi = {
     return data;
   },
 
-  // [추가] Spectrum 데이터 요청 함수
+  // 7. 특정 포인트의 Spectrum 데이터 조회 (EXP/GEN 포함)
   getSpectrum: async (params: any) => {
     const { data } = await apiClient.get<SpectrumDto[]>("/WaferData/spectrum", {
       params,
     });
+    return data;
+  },
+
+  // [신규] 8. 시뮬레이션 정합성 분석 (Residual Map) 데이터 조회
+  getResidualMap: async (params: any) => {
+    const { data } = await apiClient.get<ResidualMapDto[]>(
+      "/WaferData/residual-map",
+      { params }
+    );
+    return data;
+  },
+
+  // [신규] 9. 공정 Fingerprint (Golden Spectrum) 데이터 조회
+  getGoldenSpectrum: async (params: any) => {
+    // Golden Spectrum이 없을 경우(null)를 대비
+    const { data } = await apiClient.get<GoldenSpectrumDto | null>(
+      "/WaferData/golden-spectrum",
+      { params }
+    );
     return data;
   },
 };
