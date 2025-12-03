@@ -10,6 +10,9 @@ import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
 
+// [라이선스] 여기에 구매하신 amCharts 라이선스 키를 입력하세요.
+am5.addLicense("YOUR_LICENSE_KEY_HERE");
+
 const props = defineProps<{
   chartType: string;
   data: any[];
@@ -27,12 +30,30 @@ const createChart = () => {
   if (root) root.dispose();
 
   root = am5.Root.new(chartRef.value);
-  const myTheme = props.isDarkMode
-    ? am5themes_Dark.new(root)
-    : am5themes_Animated.new(root);
-  root.setThemes([myTheme]);
+
+  const myThemes: am5.Theme[] = [am5themes_Animated.new(root)];
+  if (props.isDarkMode) {
+    myThemes.push(am5themes_Dark.new(root));
+  }
+  root.setThemes(myThemes);
 
   createLineChart(root, props.data, props.config, props.isDarkMode || false);
+};
+
+const calculateSmartRange = (data: any[], field: string) => {
+  if (!data || data.length === 0) return null;
+  const values = data
+    .map((item) => Number(item[field]))
+    .filter((v) => !isNaN(v));
+  if (values.length === 0) return null;
+
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+
+  const strictMin = Math.floor(minVal / 10) * 10;
+  const strictMax = Math.ceil(maxVal / 10) * 10;
+
+  return { min: strictMin, max: strictMax };
 };
 
 const createLineChart = (
@@ -47,7 +68,11 @@ const createLineChart = (
       panY: true,
       wheelX: "panX",
       wheelY: "zoomX",
+      pinchZoomX: true,
       layout: root.verticalLayout,
+      paddingLeft: 0,
+      paddingRight: 10,
+      paddingBottom: config.xAxisTitle ? 25 : 0,
     })
   );
 
@@ -59,81 +84,107 @@ const createLineChart = (
   );
   cursor.lineY.set("visible", false);
 
-  const textColor = isDark ? am5.color(0xffffff) : am5.color(0x000000);
+  const textColor = isDark ? am5.color(0x94a3b8) : am5.color(0x475569);
+  const gridColor = isDark ? am5.color(0xffffff) : am5.color(0x000000);
 
-  // 1. X축 설정 (타입에 따른 분기)
+  // X축 설정
+  const xRenderer = am5xy.AxisRendererX.new(root, {
+    minGridDistance: 100,
+    minorGridEnabled: true,
+  });
+
+  xRenderer.labels.template.setAll({
+    fill: textColor,
+    fontSize: 11,
+    paddingTop: 5,
+    fontWeight: "500",
+  });
+  xRenderer.grid.template.setAll({ stroke: gridColor, strokeOpacity: 0.05 });
+
   let xAxis: am5xy.Axis<am5xy.AxisRenderer>;
 
   if (config.xAxisType === "value") {
-    // 숫자형 X축 (예: Wavelength)
-    xAxis = chartInstance.xAxes.push(
+    const valueAxis = chartInstance.xAxes.push(
       am5xy.ValueAxis.new(root, {
-        renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 50 }),
+        renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {}),
+        strictMinMax: true,
+        extraMin: 0,
+        extraMax: 0,
       })
     );
+    xAxis = valueAxis;
+
+    if (data.length > 0) {
+      const range = calculateSmartRange(data, config.xField);
+      if (range) {
+        valueAxis.setAll({ min: range.min, max: range.max });
+      }
+    }
   } else {
-    // 기본값: 날짜형 X축
     xAxis = chartInstance.xAxes.push(
       am5xy.DateAxis.new(root, {
         baseInterval: { timeUnit: config.xTimeUnit || "minute", count: 1 },
-        renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 80 }),
+        renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {}),
       })
     );
-
     if (config.xAxisDateFormat) {
-      // 날짜 포맷 설정 로직 (기존 유지)
-      const dateFormats = (xAxis as am5xy.DateAxis<am5xy.AxisRenderer>).get("dateFormats");
-      const periodChangeDateFormats = (xAxis as am5xy.DateAxis<am5xy.AxisRenderer>).get("periodChangeDateFormats");
-
+      const dateFormats = (xAxis as am5xy.DateAxis<am5xy.AxisRenderer>).get(
+        "dateFormats"
+      );
       if (dateFormats) {
         dateFormats["minute"] = config.xAxisDateFormat;
         dateFormats["hour"] = config.xAxisDateFormat;
         dateFormats["day"] = config.xAxisDateFormat;
-        dateFormats["week"] = config.xAxisDateFormat;
-        dateFormats["month"] = config.xAxisDateFormat;
       }
-      if (periodChangeDateFormats) {
-        periodChangeDateFormats["minute"] = config.xAxisDateFormat;
-        periodChangeDateFormats["hour"] = config.xAxisDateFormat;
-        periodChangeDateFormats["day"] = config.xAxisDateFormat;
-        periodChangeDateFormats["week"] = config.xAxisDateFormat;
-        periodChangeDateFormats["month"] = config.xAxisDateFormat;
-      }
-    }
-
-    if (config.tooltipDateFormat) {
-      (xAxis as am5xy.DateAxis<am5xy.AxisRenderer>).set("tooltipDateFormat", config.tooltipDateFormat);
     }
   }
 
-  xAxis.get("renderer").labels.template.setAll({
-    fill: textColor,
-    rotation: -45,
-    centerY: am5.p50,
-    centerX: am5.p100,
-  });
+  if (config.xAxisTitle) {
+    xAxis.children.push(
+      am5.Label.new(root, {
+        text: config.xAxisTitle,
+        x: am5.p50,
+        centerX: am5.p50,
+        y: am5.p100,
+        centerY: am5.p100,
+        dy: 15,
+        fill: textColor,
+        fontWeight: "bold",
+        fontSize: 12,
+      })
+    );
+  }
 
-  // 2. Y축 설정
-  const yAxes: am5xy.ValueAxis<am5xy.AxisRenderer>[] = [];
-
+  // Y축 설정
   if (config.yAxes && Array.isArray(config.yAxes)) {
     config.yAxes.forEach((yCfg: any) => {
-      const renderer = am5xy.AxisRendererY.new(root, {
+      const yRenderer = am5xy.AxisRendererY.new(root, {
         opposite: yCfg.opposite || false,
+        minGridDistance: 20,
       });
-      renderer.labels.template.set("fill", textColor);
-      
+      yRenderer.labels.template.setAll({ fill: textColor, fontSize: 11 });
+      yRenderer.grid.template.setAll({
+        stroke: gridColor,
+        strokeOpacity: 0.05,
+      });
+
+      const hasCustomRange = yCfg.min !== undefined || yCfg.max !== undefined;
+
       const axis = chartInstance.yAxes.push(
         am5xy.ValueAxis.new(root, {
-          renderer,
-          min: yCfg.min,
-          max: yCfg.max,
+          renderer: yRenderer,
+          strictMinMax: hasCustomRange,
+          maxDeviation: hasCustomRange ? 0 : 1,
+          extraMin: hasCustomRange ? 0 : 0.05,
+          extraMax: hasCustomRange ? 0 : 0.05,
         })
       );
-      
-      // 축 제목 추가
+
+      if (yCfg.min !== undefined) axis.set("min", yCfg.min);
+      if (yCfg.max !== undefined) axis.set("max", yCfg.max);
+
       if (yCfg.title) {
         axis.children.unshift(
           am5.Label.new(root, {
@@ -142,75 +193,73 @@ const createLineChart = (
             y: am5.p50,
             centerX: am5.p50,
             fill: textColor,
-            fontWeight: "bold"
+            fontWeight: "bold",
+            fontSize: 12,
           })
         );
       }
-      
-      yAxes.push(axis);
     });
   } else {
-    const renderer = am5xy.AxisRendererY.new(root, {});
-    renderer.labels.template.set("fill", textColor);
-    yAxes.push(
-      chartInstance.yAxes.push(am5xy.ValueAxis.new(root, { renderer }))
+    const yRenderer = am5xy.AxisRendererY.new(root, {});
+    yRenderer.labels.template.setAll({ fill: textColor, fontSize: 11 });
+    yRenderer.grid.template.setAll({ stroke: gridColor, strokeOpacity: 0.05 });
+    chartInstance.yAxes.push(
+      am5xy.ValueAxis.new(root, { renderer: yRenderer })
     );
   }
 
-  // 3. 시리즈 생성
+  // 4. 시리즈 생성
   if (config.series) {
     config.series.forEach((s: any) => {
-      const yAxisIndex = s.yAxisIndex || 0;
-      const targetYAxis = yAxes[yAxisIndex] || yAxes[0];
-
-      if (!targetYAxis) return;
-
       const seriesColor = am5.color(s.color);
 
+      // [핵심 수정] 툴팁 디자인 고급화
       const tooltip = am5.Tooltip.new(root, {
+        getFillFromSprite: false,
+        autoTextColor: false, // 직접 색상 지정
         labelText: s.tooltipText || "{valueY}",
-        autoTextColor: false,
       });
 
+      // 툴팁 배경: 반투명 검정(모던한 느낌) + 시리즈 색상 테두리
       tooltip.get("background")?.setAll({
-        fill: seriesColor,
-        stroke: seriesColor,
-        fillOpacity: 0.9,
-      });
+        fill: am5.color(0x1e293b), // Slate-800 (아주 짙은 남색/검정)
+        fillOpacity: 0.85,         // 적당한 투명도
+        stroke: seriesColor,       // 테두리는 시리즈 색상으로 구분
+        strokeWidth: 1,            // 얇고 세련된 테두리
+        cornerRadius: 6,           // 부드러운 라운딩
+        shadowColor: am5.color(0x000000), // 그림자 효과 추가
+        shadowBlur: 10,
+        shadowOffsetX: 4,
+        shadowOffsetY: 4,
+        shadowOpacity: 0.2
+      } as any);
 
+      // 툴팁 텍스트: 흰색 고정 (어두운 배경 위)
       tooltip.label.setAll({
         fill: am5.color(0xffffff),
+        fontSize: 12,
+        fontWeight: "500" // Regular보다는 굵게, Bold보다는 얇게
       });
 
       const series = chartInstance.series.push(
         am5xy.LineSeries.new(root, {
           name: s.name,
           xAxis: xAxis,
-          yAxis: targetYAxis,
+          yAxis: chartInstance.yAxes.getIndex(s.yAxisIndex || 0)!,
           valueYField: s.valueField,
           valueXField: config.xField,
           stroke: seriesColor,
           fill: seriesColor,
           tooltip: tooltip,
+          legendValueText: "{valueY}",
         })
       );
 
       series.strokes.template.setAll({
         strokeWidth: s.strokeWidth || 2,
+        strokeDasharray: s.strokeDasharray || undefined,
       });
 
-      if (s.bulletRadius) {
-        series.bullets.push(() =>
-          am5.Bullet.new(root, {
-            sprite: am5.Circle.new(root, {
-              radius: s.bulletRadius,
-              fill: series.get("stroke"),
-            }),
-          })
-        );
-      }
-
-      // X축이 DateAxis일 때만 날짜 처리
       if (config.xAxisType !== "value") {
         series.data.processor = am5.DataProcessor.new(root, {
           dateFields: [config.xField],
@@ -219,18 +268,47 @@ const createLineChart = (
       }
 
       series.data.setAll(data);
+      series.appear(1000);
     });
   }
 
-  const legend = chartInstance.children.push(
-    am5.Legend.new(root, { centerX: am5.p50, x: am5.p50 })
+  // 5. 범례 설정
+  const legend = chartInstance.bulletsContainer.children.push(
+    am5.Legend.new(root, {
+      x: am5.p100,
+      centerX: am5.p100,
+      y: 0,
+      centerY: 0,
+      marginTop: 10,
+      marginRight: 10,
+      layout: root.horizontalLayout,
+    })
   );
-  legend.labels.template.set("fill", textColor);
+
+  legend.get("background")?.setAll({
+    fill: isDark ? am5.color(0x000000) : am5.color(0xffffff),
+    fillOpacity: 0.7,
+    stroke: isDark ? am5.color(0xffffff) : am5.color(0x000000),
+    strokeOpacity: 0.1,
+    cornerRadiusTL: 5,
+    cornerRadiusTR: 5,
+    cornerRadiusBL: 5,
+    cornerRadiusBR: 5,
+  } as any);
+
+  legend.labels.template.setAll({
+    fill: textColor,
+    fontSize: 11,
+    fontWeight: "bold",
+  });
+  legend.valueLabels.template.setAll({ fill: textColor, fontSize: 11 });
+  legend.markers.template.setAll({ width: 15, height: 15 });
+
   legend.data.setAll(chartInstance.series.values);
+  chartInstance.appear(1000, 100);
 };
 
 onMounted(() => createChart());
-
 onUnmounted(() => {
   if (root) root.dispose();
 });
@@ -239,9 +317,16 @@ watch(
   () => props.data,
   (newData) => {
     if (chart && root) {
-      chart.series.each((series) => {
-        series.data.setAll(newData);
-      });
+      if (props.config.xAxisType === "value" && newData.length > 0) {
+        const xAxis = chart.xAxes.getIndex(
+          0
+        ) as am5xy.ValueAxis<am5xy.AxisRenderer>;
+        if (xAxis) {
+          const range = calculateSmartRange(newData, props.config.xField);
+          if (range) xAxis.setAll({ min: range.min, max: range.max });
+        }
+      }
+      chart.series.each((series) => series.data.setAll(newData));
     } else {
       createChart();
     }
