@@ -226,7 +226,7 @@
     >
       <div class="flex flex-col flex-1 w-full h-full gap-3 overflow-hidden">
         <div
-          class="flex flex-col overflow-hidden bg-white border shadow-sm rounded-xl dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shrink-0 h-[50%]"
+          class="flex flex-col overflow-hidden bg-white border shadow-sm rounded-xl dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shrink-0 h-[424px]"
         >
           <div
             class="flex items-center justify-between p-2 bg-white border-b border-slate-100 dark:border-zinc-800 dark:bg-zinc-900"
@@ -1602,3 +1602,4 @@ table td {
   font-size: 11px !important;
 }
 </style>
+
