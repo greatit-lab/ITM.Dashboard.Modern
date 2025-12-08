@@ -72,7 +72,7 @@
 
       <div class="flex items-center gap-1 pr-1 ml-auto border-l border-slate-100 dark:border-zinc-800 pl-2">
         <Button
-          icon="pi pi-sync"
+          icon="pi pi-refresh"
           rounded
           text
           severity="secondary"
@@ -85,7 +85,7 @@
     </div>
 
     <div
-      class="flex-1 min-h-0 w-full px-2 pb-2 overflow-hidden grid grid-rows-1 grid-cols-1"
+      class="flex-1 min-h-0 w-full pb-2 overflow-hidden grid grid-rows-1 grid-cols-1"
     >
       <div
         v-if="isLoading"
