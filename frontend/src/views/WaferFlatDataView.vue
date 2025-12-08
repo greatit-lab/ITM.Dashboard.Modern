@@ -7,7 +7,7 @@
       <div
         class="flex items-center justify-center w-8 h-8 bg-white border rounded-lg shadow-sm dark:bg-zinc-900 border-slate-100 dark:border-zinc-800"
       >
-        <i class="text-lg text-teal-600 pi pi-curly-braces dark:text-teal-400"></i>
+        <i class="text-lg text-teal-600 pi pi-chart-pie dark:text-teal-400"></i>
       </div>
       <div class="flex items-baseline gap-2">
         <h1
@@ -43,7 +43,7 @@
             />
           </div>
 
-          <div class="min-w-[180px] shrink-0">
+          <div class="min-w-[160px] shrink-0">
             <Select
               v-model="filterStore.selectedSdwt"
               :options="sdwts"
@@ -1539,3 +1539,4 @@ table td {
   font-size: 11px !important;
 }
 </style>
+
