@@ -156,7 +156,11 @@ const menuGroups = [
     id: "wafer",
     label: "Wafer Metrology",
     items: [
-      { to: "/waferflatdata", label: "Wafer Data", icon: "pi pi-chart-pie" },
+      {
+        to: "/waferflatdata",
+        label: "Wafer Flat Data",
+        icon: "pi pi-curly-braces",
+      },
       {
         to: "/lot-uniformity-trend",
         label: "Lot Uniformity",
@@ -170,8 +174,8 @@ const menuGroups = [
     items: [
       {
         to: "/equipment-explorer",
-        label: "Equip Specs",
-        icon: "pi pi-server",
+        label: "ITM Equip Specs",
+        icon: "pi pi-desktop", // [수정] pi-server -> pi-desktop (페이지 제목과 일치)
       },
       {
         to: "/performance-trend",
