@@ -8,7 +8,9 @@
         <div
           class="flex items-center justify-center w-8 h-8 bg-white border rounded-lg shadow-sm dark:bg-zinc-900 border-slate-100 dark:border-zinc-800"
         >
-          <i class="text-lg text-teal-600 pi pi-chart-line dark:text-teal-400"></i>
+          <i
+            class="text-lg text-teal-600 pi pi-chart-line dark:text-teal-400"
+          ></i>
         </div>
         <div class="flex items-baseline gap-2">
           <h1
@@ -33,7 +35,7 @@
             class="absolute inline-flex w-full h-full rounded-full opacity-75 bg-rose-400 animate-ping"
           ></span>
           <span
-            class="relative inline-flex w-1.5 h-1.5 bg-rose-500 rounded-full"
+            class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"
           ></span>
         </span>
         <span
@@ -44,7 +46,7 @@
     </div>
 
     <div
-      class="mb-5 bg-white dark:bg-[#111111] p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2 shadow-sm transition-colors duration-300 shrink-0"
+      class="mb-3 bg-white dark:bg-[#111111] p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2 shadow-sm transition-colors duration-300 shrink-0"
     >
       <div
         class="flex items-center flex-1 gap-2 px-1 py-1 overflow-x-auto scrollbar-hide"
@@ -103,6 +105,7 @@
             placeholder="Start Time"
             class="w-full custom-dropdown small date-picker"
             :disabled="isRealtime"
+            :stepMinute="60"
           />
         </div>
 
@@ -116,30 +119,13 @@
             placeholder="End Time"
             class="w-full custom-dropdown small date-picker"
             :disabled="isRealtime"
+            :stepMinute="60"
           />
         </div>
       </div>
 
       <div class="flex items-center gap-2 pl-2 border-l shrink-0 border-slate-100 dark:border-zinc-800">
         
-        <div class="flex items-center gap-2 bg-slate-50 dark:bg-zinc-800/50 rounded-lg px-2 py-0.5 border border-slate-100 dark:border-zinc-800">
-           <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-             <span>AUTO REFRESH</span>
-             <i class="pi pi-clock text-[9px]"></i>
-           </div>
-           <Select
-            v-model="intervalSeconds"
-            :options="intervalOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Manual"
-            class="w-[80px] h-6 !border-0 !bg-transparent !text-[11px] !shadow-none"
-            :class="{ '!text-rose-500 font-bold': isRealtime }"
-            overlayClass="custom-dropdown-panel small"
-            @change="toggleRealtime"
-          />
-        </div>
-
         <div class="flex items-center gap-1">
           <Button
             icon="pi pi-search"
@@ -155,24 +141,47 @@
             rounded
             severity="secondary"
             v-tooltip.bottom="'Reset'"
-            class="!w-7 !h-7 !text-slate-400 hover:!text-slate-600 dark:!text-zinc-500 dark:hover:!text-zinc-300"
+            class="!w-7 !h-7 !text-slate-400 hover:!text-slate-600 dark:!text-zinc-500 dark:hover:!text-zinc-300 transition-colors"
             @click="resetFilters"
             :disabled="isRealtime"
           />
         </div>
+
+        <div class="w-px h-4 bg-slate-200 dark:bg-zinc-700 mx-1"></div>
+
+        <div class="flex items-center gap-2 bg-slate-50 dark:bg-zinc-800/50 rounded-lg px-2 py-0.5 border border-slate-100 dark:border-zinc-800"
+             :class="{ 'opacity-50 pointer-events-none': !selectedEqpId }">
+           <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+             <span>AUTO</span>
+             <i class="pi pi-clock text-[9px]"></i>
+           </div>
+           <Select
+            v-model="intervalSeconds"
+            :options="intervalOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Off"
+            class="w-[110px] h-6 !border-0 !bg-transparent !text-[11px] !shadow-none small-text-dropdown"
+            :class="{ '!text-rose-500 font-bold': isRealtime }"
+            overlayClass="custom-dropdown-panel small"
+            @change="toggleRealtime"
+            :disabled="!selectedEqpId" 
+          />
+        </div>
+
       </div>
     </div>
 
     <div
       v-if="hasSearched"
-      class="flex-1 flex flex-col gap-4 animate-fade-in pb-4"
+      class="flex-1 flex flex-col gap-3 animate-fade-in pb-2 min-h-0"
     >
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-2 gap-3 flex-1 min-h-0">
         
         <div
-          class="bg-white dark:bg-[#111111] p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-[320px] relative flex flex-col group"
+          class="bg-white dark:bg-[#111111] p-3 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-full relative flex flex-col group min-h-[200px]"
         >
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-1 shrink-0">
             <h3
               class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2"
             >
@@ -181,13 +190,7 @@
           </div>
           <div class="flex-1 min-h-0 w-full relative">
             <EChart v-if="chartData.length > 0" :option="cpuOption" @chartCreated="(inst) => onChartInit('cpu', inst)" />
-            <div
-              v-else
-              class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs"
-            >
-              No Data
-            </div>
-            
+            <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">No Data</div>
             <transition name="fade">
                <button v-if="zoomStates.cpu" @click="resetChartZoom('cpu')" class="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md flex items-center gap-1 transition-colors z-10">
                  <i class="pi pi-refresh" style="font-size: 0.6rem"></i> Reset Zoom
@@ -197,9 +200,9 @@
         </div>
 
         <div
-          class="bg-white dark:bg-[#111111] p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-[320px] relative flex flex-col group"
+          class="bg-white dark:bg-[#111111] p-3 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-full relative flex flex-col group min-h-[200px]"
         >
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-1 shrink-0">
             <h3
               class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2"
             >
@@ -208,12 +211,7 @@
           </div>
           <div class="flex-1 min-h-0 w-full relative">
             <EChart v-if="chartData.length > 0" :option="memOption" @chartCreated="(inst) => onChartInit('mem', inst)" />
-            <div
-              v-else
-              class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs"
-            >
-              No Data
-            </div>
+            <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">No Data</div>
              <transition name="fade">
                <button v-if="zoomStates.mem" @click="resetChartZoom('mem')" class="absolute top-2 right-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md flex items-center gap-1 transition-colors z-10">
                  <i class="pi pi-refresh" style="font-size: 0.6rem"></i> Reset Zoom
@@ -223,9 +221,9 @@
         </div>
 
         <div
-          class="bg-white dark:bg-[#111111] p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-[320px] relative flex flex-col group"
+          class="bg-white dark:bg-[#111111] p-3 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-full relative flex flex-col group min-h-[200px]"
         >
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-1 shrink-0">
             <h3
               class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2"
             >
@@ -234,12 +232,7 @@
           </div>
           <div class="flex-1 min-h-0 w-full relative">
             <EChart v-if="chartData.length > 0" :option="cpuTempFanOption" @chartCreated="(inst) => onChartInit('dual', inst)" />
-            <div
-              v-else
-              class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs"
-            >
-              No Data
-            </div>
+            <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">No Data</div>
              <transition name="fade">
                <button v-if="zoomStates.dual" @click="resetChartZoom('dual')" class="absolute top-2 right-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md flex items-center gap-1 transition-colors z-10">
                  <i class="pi pi-refresh" style="font-size: 0.6rem"></i> Reset Zoom
@@ -249,9 +242,9 @@
         </div>
 
         <div
-          class="bg-white dark:bg-[#111111] p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-[320px] relative flex flex-col group"
+          class="bg-white dark:bg-[#111111] p-3 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm h-full relative flex flex-col group min-h-[200px]"
         >
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-1 shrink-0">
             <h3
               class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2"
             >
@@ -260,12 +253,7 @@
           </div>
           <div class="flex-1 min-h-0 w-full relative">
             <EChart v-if="chartData.length > 0" :option="gpuOption" @chartCreated="(inst) => onChartInit('gpu', inst)" />
-            <div
-              v-else
-              class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs"
-            >
-              No Data
-            </div>
+            <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">No Data</div>
              <transition name="fade">
                <button v-if="zoomStates.gpu" @click="resetChartZoom('gpu')" class="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md flex items-center gap-1 transition-colors z-10">
                  <i class="pi pi-refresh" style="font-size: 0.6rem"></i> Reset Zoom
@@ -276,81 +264,43 @@
       </div>
 
       <div
-        class="bg-white dark:bg-[#111111] rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden"
+        class="bg-white dark:bg-[#111111] rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden h-auto shrink-0 flex flex-col"
       >
-        <div
-          class="px-4 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex items-center gap-2"
-        >
+        <div class="px-4 py-2 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex items-center gap-2 shrink-0">
           <i class="pi pi-list text-teal-500 text-xs"></i>
           <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200">
             Performance Summary (Peak Values)
           </h3>
         </div>
         <div class="overflow-x-auto">
-          <table
-            class="w-full text-xs text-left text-slate-600 dark:text-slate-400"
-          >
-            <thead
-              class="text-[10px] text-slate-500 uppercase bg-slate-50 dark:bg-zinc-800 dark:text-slate-400"
-            >
+          <table class="w-full text-xs text-left text-slate-600 dark:text-slate-400 table-fixed">
+            <thead class="text-[10px] text-slate-500 uppercase bg-slate-50 dark:bg-zinc-800 dark:text-slate-400">
               <tr>
-                <th scope="col" class="px-4 py-3">EQP ID</th>
-                <th scope="col" class="px-4 py-3">CPU Peak Time</th>
-                <th scope="col" class="px-4 py-3 text-right">CPU Max (%)</th>
-                <th scope="col" class="px-4 py-3 text-right">CPU Temp (°C)</th>
-                <th scope="col" class="px-4 py-3 text-right">Fan (RPM)</th>
-                <th scope="col" class="px-4 py-3">Mem Peak Time</th>
-                <th scope="col" class="px-4 py-3 text-right">Mem Max (%)</th>
-                <th scope="col" class="px-4 py-3">GPU Peak Time</th>
-                <th scope="col" class="px-4 py-3 text-right">GPU Max (°C)</th>
+                <th scope="col" class="px-4 py-2 w-[120px] text-left font-bold text-slate-600 dark:text-slate-300">EQP ID</th>
+                <th scope="col" class="px-4 py-2 text-left">CPU Peak Time</th>
+                <th scope="col" class="px-4 py-2 text-left">CPU Max (%)</th>
+                <th scope="col" class="px-4 py-2 text-left">CPU Temp (°C)</th>
+                <th scope="col" class="px-4 py-2 text-left">Fan (RPM)</th>
+                <th scope="col" class="px-4 py-2 text-left">Mem Peak Time</th>
+                <th scope="col" class="px-4 py-2 text-left">Mem Max (%)</th>
+                <th scope="col" class="px-4 py-2 text-left">GPU Peak Time</th>
+                <th scope="col" class="px-4 py-2 text-left">GPU Max (°C)</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
-              <tr
-                v-for="item in summaryData"
-                :key="item.eqpId"
-                class="hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors"
-              >
-                <td
-                  class="px-4 py-2 font-bold text-slate-700 dark:text-slate-200"
-                >
-                  {{ item.eqpId }}
-                </td>
-                <td class="px-4 py-2 font-mono">
-                  {{ formatDate(item.cpuPeakTime) }}
-                </td>
-                <td
-                  class="px-4 py-2 text-right font-mono text-blue-600 dark:text-blue-400 font-bold"
-                >
-                  {{ fmt(item.cpuMax, 2) }}
-                </td>
-                <td class="px-4 py-2 text-right font-mono">
-                  {{ fmt(item.cpuTempAtPeak, 1) }}
-                </td>
-                <td class="px-4 py-2 text-right font-mono">
-                  {{ fmt(item.fanSpeedAtPeak, 0) }}
-                </td>
-                <td class="px-4 py-2 font-mono">
-                  {{ formatDate(item.memPeakTime) }}
-                </td>
-                <td
-                  class="px-4 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold"
-                >
-                  {{ fmt(item.memMax, 2) }}
-                </td>
-                <td class="px-4 py-2 font-mono">
-                  {{ formatDate(item.gpuPeakTime) }}
-                </td>
-                <td
-                  class="px-4 py-2 text-right font-mono text-orange-600 dark:text-orange-400"
-                >
-                  {{ fmt(item.gpuMax, 1) }}
-                </td>
+              <tr v-for="item in summaryData" :key="item.eqpId" class="hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors">
+                <td class="px-4 py-1.5 text-left font-bold text-slate-700 dark:text-slate-200">{{ item.eqpId }}</td>
+                <td class="px-4 py-1.5 text-left font-mono">{{ formatDate(item.cpuPeakTime) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono text-red-600 dark:text-red-400 font-bold">{{ fmt(item.cpuMax, 2) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono">{{ fmt(item.cpuTempAtPeak, 1) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono">{{ fmt(item.fanSpeedAtPeak, 0) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono">{{ formatDate(item.memPeakTime) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono text-red-600 dark:text-red-400 font-bold">{{ fmt(item.memMax, 2) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono">{{ formatDate(item.gpuPeakTime) }}</td>
+                <td class="px-4 py-1.5 text-left font-mono text-red-600 dark:text-red-400 font-bold">{{ fmt(item.gpuMax, 1) }}</td>
               </tr>
               <tr v-if="summaryData.length === 0">
-                <td colspan="9" class="px-4 py-8 text-center text-slate-400">
-                  No Summary Data Available
-                </td>
+                <td colspan="9" class="px-4 py-8 text-center text-slate-400">No Summary Data Available</td>
               </tr>
             </tbody>
           </table>
@@ -386,16 +336,14 @@ import {
   performanceApi,
   type PerformanceDataPointDto,
 } from "@/api/performance";
-import EChart from "@/components/common/EChart.vue"; // ECharts 사용
+import EChart from "@/components/common/EChart.vue";
 import type { ECharts } from "echarts";
 
 // PrimeVue
 import Select from "primevue/select";
-// AutoComplete 대신 Select 사용
 import DatePicker from "primevue/datepicker";
 import Button from "primevue/button";
 
-// [요약 데이터 인터페이스]
 interface PerformanceSummary {
   eqpId: string;
   cpuPeakTime?: string;
@@ -408,7 +356,6 @@ interface PerformanceSummary {
   gpuMax?: number;
 }
 
-// --- State ---
 const filterStore = useFilterStore();
 const selectedEqpId = ref("");
 const startDate = ref(new Date(Date.now() - 24 * 60 * 60 * 1000));
@@ -418,7 +365,6 @@ const intervalSeconds = ref(0);
 const sites = ref<string[]>([]);
 const sdwts = ref<string[]>([]);
 const eqpIds = ref<string[]>([]);
-// filteredEqpIds 제거 (Select에서 자체 검색 사용)
 
 const chartData = ref<PerformanceDataPointDto[]>([]);
 const summaryData = ref<PerformanceSummary[]>([]);
@@ -427,21 +373,13 @@ const hasSearched = ref(false);
 const isRealtime = ref(false);
 let refreshTimer: number | null = null;
 
-// Zoom States & Chart Instances
 const zoomStates = reactive<Record<string, boolean>>({
-  cpu: false,
-  mem: false,
-  dual: false,
-  gpu: false
+  cpu: false, mem: false, dual: false, gpu: false
 });
 const chartInstances = reactive<Record<string, ECharts | null>>({
-  cpu: null,
-  mem: null,
-  dual: null,
-  gpu: null
+  cpu: null, mem: null, dual: null, gpu: null
 });
 
-// Dark Mode Check
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 let themeObserver: MutationObserver | null = null;
 
@@ -452,12 +390,15 @@ const intervalOptions = [
   { label: "5 Min", value: 300 },
 ];
 
-// --- Configs for EChart Options ---
 const getTooltipFormatter = (unitMap: Record<string, string>) => {
   return (params: any) => {
     if(!params || !params[0]) return '';
-    const xVal = params[0].axisValueLabel;
-    let html = `<div class="font-bold mb-1">${xVal}</div>`;
+    const xDate = new Date(params[0].axisValueLabel); 
+    const timeStr = isNaN(xDate.getTime()) 
+      ? params[0].axisValueLabel 
+      : xDate.toLocaleTimeString('en-GB', { hour12: false }); 
+
+    let html = `<div class="font-bold mb-1">${timeStr}</div>`;
     
     params.forEach((p: any) => {
       let key = '';
@@ -476,6 +417,34 @@ const getTooltipFormatter = (unitMap: Record<string, string>) => {
     });
     return html;
   };
+};
+
+const axisFormatter = (value: number | string) => {
+  const val = Number(value);
+  if (isNaN(val)) return value;
+  return Number.isInteger(val) ? val : val.toFixed(1);
+};
+
+const getAxisRange = (field: keyof PerformanceDataPointDto, isPercent: boolean = false) => {
+  if (!chartData.value.length) return {};
+  const values = chartData.value.map(d => Number(d[field]));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  
+  const range = max - min || (min === 0 ? 1 : Math.abs(min * 0.1));
+  const padding = range * 0.2; 
+
+  let newMin = min - padding;
+  let newMax = max + padding;
+
+  if (isPercent) {
+    newMin = Math.max(0, newMin);
+    newMax = Math.min(100, newMax);
+  } else {
+    if (field === 'fanSpeed') newMin = Math.max(0, newMin);
+  }
+
+  return { min: newMin, max: newMax };
 };
 
 const commonChartOption = () => {
@@ -516,9 +485,13 @@ const commonChartOption = () => {
       },
       axisLine: { lineStyle: { color: gridColor } },
     },
+    legend: {
+      show: false
+    },
     yAxis: {
       type: "value",
-      axisLabel: { color: textColor, fontSize: 10 },
+      scale: true,
+      axisLabel: { color: textColor, fontSize: 10, formatter: axisFormatter },
       splitLine: { lineStyle: { color: gridColor } },
     },
   };
@@ -526,16 +499,24 @@ const commonChartOption = () => {
 
 const cpuOption = computed(() => {
   const base = commonChartOption();
+  const range = getAxisRange('cpuUsage', true);
+  
   return {
     ...base,
     tooltip: { ...base.tooltip, formatter: getTooltipFormatter({ "CPU Usage": "%" }) },
+    yAxis: {
+      ...base.yAxis,
+      min: range.min,
+      max: range.max
+    },
     series: [
       {
         name: "CPU Usage",
         type: "line",
         encode: { x: 'timestamp', y: 'cpuUsage' },
         smooth: true,
-        showSymbol: false,
+        showSymbol: true,
+        symbolSize: 3,
         itemStyle: { color: "#3b82f6" },
         areaStyle: {
           color: {
@@ -554,16 +535,24 @@ const cpuOption = computed(() => {
 
 const memOption = computed(() => {
   const base = commonChartOption();
+  const range = getAxisRange('memoryUsage', true);
+
   return {
     ...base,
     tooltip: { ...base.tooltip, formatter: getTooltipFormatter({ "Memory Usage": "%" }) },
+    yAxis: {
+      ...base.yAxis,
+      min: range.min,
+      max: range.max
+    },
     series: [
       {
         name: "Memory Usage",
         type: "line",
         encode: { x: 'timestamp', y: 'memoryUsage' },
         smooth: true,
-        showSymbol: false,
+        showSymbol: true,
+        symbolSize: 3,
         itemStyle: { color: "#10b981" },
         areaStyle: {
           color: {
@@ -587,22 +576,40 @@ const cpuTempFanOption = computed(() => {
     ? "rgba(255, 255, 255, 0.1)"
     : "rgba(0, 0, 0, 0.1)";
 
+  const tempRange = getAxisRange('cpuTemp', false);
+  const fanRange = getAxisRange('fanSpeed', false);
+
   return {
     ...base,
     tooltip: { ...base.tooltip, formatter: getTooltipFormatter({ "CPU Temp": "°C", "Fan Speed": "RPM" }) },
+    legend: {
+      show: true,
+      data: ["CPU Temp", "Fan Speed"],
+      selectedMode: true,
+      top: 5,
+      right: 70,
+      textStyle: { color: textColor, fontSize: 10 },
+      itemGap: 10,
+      itemWidth: 15,
+      itemHeight: 10
+    },
     yAxis: [
       {
         type: "value",
         name: "Temp (°C)",
         position: "left",
-        axisLabel: { color: textColor, fontSize: 10 },
+        min: tempRange.min,
+        max: tempRange.max,
+        axisLabel: { color: textColor, fontSize: 10, formatter: axisFormatter },
         splitLine: { lineStyle: { color: gridColor } },
       },
       {
         type: "value",
         name: "Fan (RPM)",
         position: "right",
-        axisLabel: { color: textColor, fontSize: 10 },
+        min: fanRange.min,
+        max: fanRange.max,
+        axisLabel: { color: textColor, fontSize: 10, formatter: axisFormatter },
         splitLine: { show: false },
       },
     ],
@@ -613,7 +620,8 @@ const cpuTempFanOption = computed(() => {
         yAxisIndex: 0,
         encode: { x: 'timestamp', y: 'cpuTemp' },
         smooth: true,
-        showSymbol: false,
+        showSymbol: true,
+        symbolSize: 3,
         itemStyle: { color: "#f59e0b" },
       },
       {
@@ -622,9 +630,9 @@ const cpuTempFanOption = computed(() => {
         yAxisIndex: 1,
         encode: { x: 'timestamp', y: 'fanSpeed' },
         smooth: true,
-        showSymbol: false,
-        itemStyle: { color: "#64748b" },
-        lineStyle: { type: "dashed" },
+        showSymbol: true,
+        symbolSize: 3,
+        itemStyle: { color: "#8b5cf6" },
       },
     ],
   };
@@ -632,16 +640,24 @@ const cpuTempFanOption = computed(() => {
 
 const gpuOption = computed(() => {
   const base = commonChartOption();
+  const range = getAxisRange('gpuTemp', false);
+
   return {
     ...base,
     tooltip: { ...base.tooltip, formatter: getTooltipFormatter({ "GPU Temp": "°C" }) },
+    yAxis: {
+      ...base.yAxis,
+      min: range.min,
+      max: range.max
+    },
     series: [
       {
         name: "GPU Temp",
         type: "line",
         encode: { x: 'timestamp', y: 'gpuTemp' },
         smooth: true,
-        showSymbol: false,
+        showSymbol: true,
+        symbolSize: 3,
         itemStyle: { color: "#ef4444" },
         areaStyle: {
           color: {
@@ -661,17 +677,13 @@ const gpuOption = computed(() => {
 // --- Chart Events (Zoom) ---
 const onChartInit = (chartKey: string, instance: any) => {
   chartInstances[chartKey] = instance;
-  
   instance.on('dataZoom', (params: any) => {
     const option = instance.getOption();
     if(option.dataZoom && option.dataZoom[0]) {
       const start = option.dataZoom[0].start;
       const end = option.dataZoom[0].end;
-      if (start > 0 || end < 100) {
-        zoomStates[chartKey] = true;
-      } else {
-        zoomStates[chartKey] = false;
-      }
+      if (start > 0 || end < 100) zoomStates[chartKey] = true;
+      else zoomStates[chartKey] = false;
     }
   });
 };
@@ -679,11 +691,7 @@ const onChartInit = (chartKey: string, instance: any) => {
 const resetChartZoom = (chartKey: string) => {
   const instance = chartInstances[chartKey];
   if(instance) {
-    instance.dispatchAction({
-      type: 'dataZoom',
-      start: 0,
-      end: 100
-    });
+    instance.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
     zoomStates[chartKey] = false;
   }
 };
@@ -691,14 +699,10 @@ const resetChartZoom = (chartKey: string) => {
 // --- Lifecycle ---
 onMounted(async () => {
   sites.value = await dashboardApi.getSites();
-
   if (filterStore.selectedSite) {
     sdwts.value = await dashboardApi.getSdwts(filterStore.selectedSite);
-    if (filterStore.selectedSdwt) {
-      await loadEqpIds();
-    }
+    if (filterStore.selectedSdwt) await loadEqpIds();
   }
-
   themeObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.attributeName === "class") {
@@ -706,10 +710,7 @@ onMounted(async () => {
       }
     });
   });
-  themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 });
 
 onUnmounted(() => {
@@ -721,35 +722,25 @@ onUnmounted(() => {
 const onSiteChange = async () => {
   filterStore.setSite(filterStore.selectedSite);
   selectedEqpId.value = "";
-  sdwts.value = filterStore.selectedSite
-    ? await dashboardApi.getSdwts(filterStore.selectedSite)
-    : [];
+  sdwts.value = filterStore.selectedSite ? await dashboardApi.getSdwts(filterStore.selectedSite) : [];
   eqpIds.value = [];
   hasSearched.value = false;
 };
 
 const onSdwtChange = async () => {
   selectedEqpId.value = "";
-  if (filterStore.selectedSdwt) {
-    await loadEqpIds();
-  }
+  if (filterStore.selectedSdwt) await loadEqpIds();
 };
 
 const loadEqpIds = async () => {
-  eqpIds.value = await equipmentApi.getEqpIds(
-    undefined,
-    filterStore.selectedSdwt
-  );
+  eqpIds.value = await equipmentApi.getEqpIds(undefined, filterStore.selectedSdwt);
 };
-
-// searchEqpId Removed (using Select filter)
 
 const toggleRealtime = () => {
   if (intervalSeconds.value > 0) {
     isRealtime.value = true;
     updateRealtimeDates();
     searchData();
-
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = setInterval(() => {
       updateRealtimeDates();
@@ -773,27 +764,34 @@ const searchData = async (silent = false) => {
   hasSearched.value = true;
 
   try {
+    const fixedStart = new Date(startDate.value);
+    fixedStart.setMinutes(0, 0, 0); 
+
+    const fixedEnd = new Date(endDate.value);
+    fixedEnd.setMinutes(59, 59, 999); 
+
     let fetchInterval = 60;
-    const diffHours =
-      (endDate.value.getTime() - startDate.value.getTime()) / 3600000;
+    
+    const diffMs = fixedEnd.getTime() - fixedStart.getTime();
+    const diffDays = diffMs / (1000 * 3600 * 24);
 
     if (isRealtime.value) {
       fetchInterval = intervalSeconds.value;
     } else {
-      if (diffHours <= 1) fetchInterval = 5;
-      else if (diffHours <= 24) fetchInterval = 60;
-      else if (diffHours <= 72) fetchInterval = 300;
-      else fetchInterval = 3600;
+      if (diffDays <= 1) fetchInterval = 5;       
+      else if (diffDays <= 3) fetchInterval = 10; 
+      else if (diffDays <= 7) fetchInterval = 60; 
+      else if (diffDays <= 30) fetchInterval = 600; 
+      else fetchInterval = 1800; 
     }
 
     const rawData = await performanceApi.getHistory(
-      startDate.value.toISOString(),
-      endDate.value.toISOString(),
+      isRealtime.value ? startDate.value.toISOString() : fixedStart.toISOString(),
+      isRealtime.value ? endDate.value.toISOString() : fixedEnd.toISOString(),
       selectedEqpId.value,
       fetchInterval
     );
 
-    // ISO String 포맷 정리 및 숫자 변환
     chartData.value = rawData
       .filter((d) => d.timestamp)
       .map((d) => {
@@ -827,8 +825,6 @@ const calculateSummary = (data: PerformanceDataPointDto[]) => {
     summaryData.value = [];
     return;
   }
-
-  // 타입 단언으로 undefined 방지
   let cpuPeakItem = data[0] as PerformanceDataPointDto;
   let memPeakItem = data[0] as PerformanceDataPointDto;
   let gpuPeakItem = data[0] as PerformanceDataPointDto;
@@ -864,26 +860,20 @@ const resetFilters = () => {
   intervalSeconds.value = 0;
 };
 
-// Utils
 const formatDate = (dateStr: string | undefined) => {
   if (!dateStr) return "-";
   const d = new Date(dateStr);
-  return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes()
-  ).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+  return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
 };
 
 const fmt = (val: number | string | undefined, digits: number) => {
   const num = Number(val);
-  return !isNaN(num) && val !== undefined && val !== null
-    ? num.toFixed(digits)
-    : "-";
+  return !isNaN(num) && val !== undefined && val !== null ? num.toFixed(digits) : "-";
 };
 </script>
 
 <style scoped>
+/* 기존 스타일 유지 */
 :deep(.p-select),
 :deep(.custom-dropdown) {
   @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors;
@@ -915,26 +905,22 @@ const fmt = (val: number | string | undefined, digits: number) => {
 :deep(.p-autocomplete-dropdown svg) {
   @apply w-3 h-3;
 }
-
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-/* 필터 검색창 스타일 */
 :deep(.p-select-filter-container) {
   @apply !p-2;
 }
 :deep(.p-select-filter-input) {
   @apply !text-xs !py-1.5 !px-2;
+}
+
+:deep(.small-text-dropdown .p-select-label) {
+  font-size: 11px !important;
+  padding: 4px 8px !important;
 }
 </style>
