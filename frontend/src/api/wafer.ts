@@ -73,16 +73,27 @@ export interface LotUniformitySeriesDto {
   }[];
 }
 
+// [추가됨] Spectrum Trend 분석용 DTO
+export interface SpectrumSeriesDto {
+  name: string;
+  waferId: number;
+  pointId: number;
+  data: [number, number][]; // [wavelength, intensity]
+}
+
 // --- API 함수 ---
 
 export const waferApi = {
+  // 1. 필터 값 조회
   getDistinctValues: async (field: string, params: any) => {
+    // 기존 URL 유지 (/Filters/...)
     const { data } = await apiClient.get<string[]>(`/Filters/${field}`, {
       params,
     });
     return data;
   },
 
+  // 2. Flat Data 조회
   getFlatData: async (params: any) => {
     const { data } = await apiClient.get<{
       items: WaferFlatDataDto[];
@@ -91,6 +102,7 @@ export const waferApi = {
     return data;
   },
 
+  // 3. 통계 데이터 조회
   getStatistics: async (params: any) => {
     const { data } = await apiClient.get<StatisticsDto>(
       "/WaferData/statistics",
@@ -101,6 +113,7 @@ export const waferApi = {
     return data;
   },
 
+  // 4. 포인트 데이터 조회
   getPointData: async (params: any) => {
     const { data } = await apiClient.get<PointDataResponseDto>(
       "/WaferData/pointdata",
@@ -109,6 +122,7 @@ export const waferApi = {
     return data;
   },
 
+  // 5. PDF 존재 여부 확인
   checkPdf: async (eqpId: string, servTs: string) => {
     const dt =
       typeof servTs === "string"
@@ -122,6 +136,7 @@ export const waferApi = {
     return data.exists;
   },
 
+  // 6. PDF 이미지 Base64 변환 조회
   getPdfImageBase64: async (
     eqpId: string,
     dateTime: string,
@@ -145,6 +160,7 @@ export const waferApi = {
     return data;
   },
 
+  // 7. 단일 스펙트럼 조회
   getSpectrum: async (params: any) => {
     const { data } = await apiClient.get<SpectrumDto[]>("/WaferData/spectrum", {
       params,
@@ -152,6 +168,7 @@ export const waferApi = {
     return data;
   },
 
+  // 8. Residual Map 조회
   getResidualMap: async (params: any) => {
     const { data } = await apiClient.get<ResidualMapDto[]>(
       "/WaferData/residual-map",
@@ -160,6 +177,7 @@ export const waferApi = {
     return data;
   },
 
+  // 9. Golden Spectrum 조회
   getGoldenSpectrum: async (params: any) => {
     const { data } = await apiClient.get<GoldenSpectrumDto | null>(
       "/WaferData/golden-spectrum",
@@ -168,6 +186,7 @@ export const waferApi = {
     return data;
   },
 
+  // 10. 사용 가능한 Metric 조회
   getAvailableMetrics: async (params: any) => {
     const { data } = await apiClient.get<string[]>("/WaferData/metrics", {
       params,
@@ -175,9 +194,21 @@ export const waferApi = {
     return data;
   },
 
+  // 11. Lot Uniformity Trend 조회
   getLotUniformityTrend: async (params: any) => {
     const { data } = await apiClient.get<LotUniformitySeriesDto[]>(
       "/WaferData/trend",
+      { params }
+    );
+    return data;
+  },
+
+  // [추가됨] 12. Spectrum Analysis Trend 조회
+  getSpectrumTrend: async (params: any) => {
+    // Backend Controller에 @Get('trend/spectrum') 엔드포인트가 있어야 함
+    // params: { lotId, pointId, waferIds }
+    const { data } = await apiClient.get<SpectrumSeriesDto[]>(
+      "/WaferData/trend/spectrum",
       { params }
     );
     return data;
