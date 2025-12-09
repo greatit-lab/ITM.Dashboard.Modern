@@ -133,7 +133,7 @@
             class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"
           >
             <i class="text-purple-500 pi pi-chart-line"></i>
-            Top Memory Consumers Trend
+            Top Memory Consumers Trend - {{ selectedEqpId }}
           </h3>
           <span class="text-[10px] text-slate-400 font-medium">
             (Displaying top {{ displayedProcessCount }} processes)
@@ -177,7 +177,7 @@
           <div class="flex items-center gap-2">
             <i class="text-xs text-purple-500 pi pi-list"></i>
             <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200">
-              Process Statistics Summary
+              Process Statistics Summary - {{ selectedEqpId }}
             </h3>
           </div>
           <div class="text-[11px] font-mono text-slate-400 dark:text-slate-500">
@@ -266,13 +266,13 @@
                 <td
                   class="px-4 py-2 font-mono font-bold text-right text-purple-600 dark:text-purple-400"
                 >
-                  {{ proc.max.toLocaleString() }} MB
+                  {{ formatNumber(proc.max() }} MB
                 </td>
                 <td class="px-4 py-2 font-mono text-right">
-                  {{ proc.avg.toFixed(0).toLocaleString() }} MB
+                  {{ formatNumber(proc.avg() }} MB
                 </td>
                 <td class="px-4 py-2 font-mono text-right text-slate-500">
-                  {{ proc.last.toLocaleString() }} MB
+                  {{ formatNumber(proc.last() }} MB
                 </td>
                 <td class="px-4 py-2 text-center">
                   <span
@@ -589,8 +589,8 @@ const processData = (data: ProcessMemoryDataDto[]) => {
       name: name,
       type: "line",
       smooth: true,
-      showSymbol: false,
-      symbolSize: 4,
+      showSymbol: true, // 포인트 표시
+      symbolSize: 2, // 포인트 크기(작게)
       itemStyle: { color: color },
       lineStyle: { width: 2 },
       encode: { x: "timestamp", y: name },
@@ -609,7 +609,8 @@ const processData = (data: ProcessMemoryDataDto[]) => {
       name,
       color,
       max,
-      avg: sum / pData.length,
+      // Avg NaN 방지 (0으로 나누기 방지)
+      avg: pData.length > 0 ? sum / pData.length : 0,
       last,
     });
   });
@@ -647,6 +648,11 @@ const formattedPeriod = computed(() => {
   // return `${fmt(startDate.value)} 00:00 ~ ${fmt(endDate.value)} 23:59`;
   return `${fmt(startDate.value)} ~ ${fmt(endDate.value)}`;
 });
+
+// 숫자 포맷 함수 (소수점 최대 2자리)
+const formatNumber = (val : number) => {
+  return val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+};
 
 // --- ECharts Options ---
 const chartOption = computed(() => {
@@ -858,3 +864,4 @@ const resetZoom = () => {
   font-size: 12px !important;
 }
 </style>
+
