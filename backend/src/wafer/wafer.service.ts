@@ -649,21 +649,26 @@ export class WaferService {
     `;
 
     try {
-      const countsResult = await this.prisma.$queryRawUnsafe<any[]>(checkSql);
-      
+      // [Fix] Prisma Raw Query 결과 타입을 명시하여 any 오류 해결
+      const countsResult =
+        await this.prisma.$queryRawUnsafe<Record<string, number | bigint>[]>(
+          checkSql,
+        );
+
       if (!countsResult || countsResult.length === 0) {
         return [];
       }
 
-      const counts = countsResult[0]; // { t1: 100, t2: 0, ... }
+      const counts = countsResult[0];
 
-      // count > 0 인 컬럼만 필터링
-      return allowedMetrics.filter((col) => {
-        // BigInt 처리를 위해 Number() 변환 또는 0 비교
-        const val = counts[col];
-        return val && Number(val) > 0;
-      }).sort();
-
+      // count > 0 인 컬럼만 필터링하여 반환
+      return allowedMetrics
+        .filter((col) => {
+          const val = counts[col];
+          // BigInt 처리를 위해 Number() 변환 및 null/undefined 체크
+          return val !== undefined && val !== null && Number(val) > 0;
+        })
+        .sort();
     } catch (e) {
       console.error('Error checking metric data existence:', e);
       return [];
@@ -676,9 +681,11 @@ export class WaferService {
 
     if (!metric) throw new Error('Metric is required');
 
-    // 보안 검증: 허용된 컬럼인지 확인 (getAvailableMetrics 재사용 또는 별도 검증)
-    // 여기서는 간단히 스키마 컬럼인지 확인하거나, 위 로직을 신뢰
-    // SQL Injection 방지를 위해 큰따옴표 처리
+    // 유효성 검증: 허용된 Metric인지 확인 (getAvailableMetrics 로직 활용)
+    const validMetrics = await this.getAvailableMetrics(params);
+    if (!validMetrics.includes(metric)) {
+      return [];
+    }
 
     const whereSql = this.buildUniqueWhere(params);
     if (!whereSql) return [];
