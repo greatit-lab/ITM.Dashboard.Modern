@@ -20,11 +20,7 @@ import { WaferController } from './wafer/wafer.controller';
 import { WaferService } from './wafer/wafer.service';
 
 @Module({
-  imports: [
-    EquipmentModule,
-    PreAlignModule,
-    LampLifeModule,
-  ],
+  imports: [EquipmentModule, PreAlignModule, LampLifeModule],
   controllers: [
     DashboardController,
     PerformanceController,
