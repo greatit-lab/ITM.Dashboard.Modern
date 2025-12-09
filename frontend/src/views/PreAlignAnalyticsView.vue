@@ -1,4 +1,4 @@
-<!-- frontend/src/views/PreAlignAnalyticsView.vue -->
+ <!-- frontend/src/views/PreAlignAnalyticsView.vue -->
 <template>
   <div
     class="flex flex-col h-full w-full font-sans transition-colors duration-500 bg-[#F8FAFC] dark:bg-[#09090B]"
@@ -55,16 +55,16 @@
           />
         </div>
         <div class="min-w-[160px] shrink-0">
-          <AutoComplete
+          <Select
             v-model="filter.eqpId"
-            :suggestions="filteredEqpIds"
-            @complete="searchEqp"
+            :options="eqpIds"
+            filter
             placeholder="EQP ID"
             :disabled="!filter.sdwt"
-            dropdown
+            showClear
             class="w-full custom-dropdown small"
-            inputClass="custom-input-text small !pr-7"
-            panelClass="custom-dropdown-panel small"
+            overlayClass="custom-dropdown-panel small"
+            @change="onEqpIdChange"
           />
         </div>
 
@@ -122,7 +122,7 @@
         <div class="flex items-center gap-2">
           <div class="w-1 h-4 bg-indigo-500 rounded-full"></div>
           <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200">
-            Alignment Trend
+            {{ searchedEqpId ? `${searchedEqpId} - ` : "" }}Alignment Trend
           </h3>
           <span
             v-if="hasSearched"
@@ -201,7 +201,7 @@ import type { ECharts } from "echarts";
 
 // Components
 import Select from "primevue/select";
-import AutoComplete from "primevue/autocomplete";
+// AutoComplete 제거
 import DatePicker from "primevue/datepicker";
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
@@ -218,11 +218,12 @@ const filter = reactive({
 const sites = ref<string[]>([]);
 const sdwts = ref<string[]>([]);
 const eqpIds = ref<string[]>([]);
-const filteredEqpIds = ref<string[]>([]);
+// filteredEqpIds 제거 (Select 내부 필터 사용)
 
 const isLoading = ref(false);
 const hasSearched = ref(false);
 const chartData = ref<PreAlignDataDto[]>([]);
+const searchedEqpId = ref(""); // [수정 6] 검색된 장비명 저장용
 
 // Zoom State
 const isZoomed = ref(false);
@@ -241,6 +242,27 @@ const themeObserver = new MutationObserver((mutations) => {
 // --- Lifecycle ---
 onMounted(async () => {
   sites.value = await dashboardApi.getSites();
+
+  // [수정 1] localStorage에서 필터 상태 복원
+  const savedSite = localStorage.getItem("prealign_site");
+  const savedSdwt = localStorage.getItem("prealign_sdwt");
+  const savedEqpId = localStorage.getItem("prealign_eqpid");
+
+  if (savedSite && sites.value.includes(savedSite)) {
+    filter.site = savedSite;
+    sdwts.value = await dashboardApi.getSdwts(savedSite);
+
+    if (savedSdwt) {
+      filter.sdwt = savedSdwt;
+      // SDWT에 해당하는 EQP 목록 로드
+      eqpIds.value = await equipmentApi.getEqpIds(undefined, savedSdwt);
+
+      if (savedEqpId && eqpIds.value.includes(savedEqpId)) {
+        filter.eqpId = savedEqpId;
+      }
+    }
+  }
+
   themeObserver.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ["class"],
@@ -253,25 +275,45 @@ onUnmounted(() => {
 
 // --- Handlers ---
 const onSiteChange = async () => {
-  sdwts.value = filter.site ? await dashboardApi.getSdwts(filter.site) : [];
+  // [수정 1] 변경 시 localStorage 저장
+  if (filter.site) {
+    localStorage.setItem("prealign_site", filter.site);
+    sdwts.value = await dashboardApi.getSdwts(filter.site);
+  } else {
+    localStorage.removeItem("prealign_site");
+    sdwts.value = [];
+  }
+
+  // 하위 필터 초기화
   filter.sdwt = "";
+  localStorage.removeItem("prealign_sdwt");
   filter.eqpId = "";
+  localStorage.removeItem("prealign_eqpid");
   eqpIds.value = [];
 };
 
 const onSdwtChange = async () => {
+  // [수정 1] 변경 시 localStorage 저장
   if (filter.sdwt) {
+    localStorage.setItem("prealign_sdwt", filter.sdwt);
     eqpIds.value = await equipmentApi.getEqpIds(undefined, filter.sdwt);
   } else {
+    localStorage.removeItem("prealign_sdwt");
     eqpIds.value = [];
   }
+
+  // 하위 필터 초기화
   filter.eqpId = "";
+  localStorage.removeItem("prealign_eqpid");
 };
 
-const searchEqp = (e: any) => {
-  filteredEqpIds.value = eqpIds.value.filter((id) =>
-    id.toLowerCase().includes(e.query.toLowerCase())
-  );
+// [수정 1] EQPID 변경 시 localStorage 저장
+const onEqpIdChange = () => {
+  if (filter.eqpId) {
+    localStorage.setItem("prealign_eqpid", filter.eqpId);
+  } else {
+    localStorage.removeItem("prealign_eqpid");
+  }
 };
 
 const search = async () => {
@@ -280,6 +322,7 @@ const search = async () => {
   isLoading.value = true;
   hasSearched.value = true;
   isZoomed.value = false;
+  searchedEqpId.value = filter.eqpId; // [수정 6] 검색된 ID 업데이트
 
   try {
     const data = await preAlignApi.getData(
@@ -303,23 +346,27 @@ const reset = () => {
   filter.startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   filter.endDate = new Date();
 
+  // localStorage 초기화
+  localStorage.removeItem("prealign_site");
+  localStorage.removeItem("prealign_sdwt");
+  localStorage.removeItem("prealign_eqpid");
+
   sdwts.value = [];
   eqpIds.value = [];
   chartData.value = [];
   hasSearched.value = false;
   isZoomed.value = false;
+  searchedEqpId.value = "";
 };
 
 // --- Chart Helper (Zoom Event) ---
 const onChartCreated = (instance: any) => {
   chartInstance = instance;
   instance.on("dataZoom", () => {
-    // 줌 상태 감지 (시작이 0이 아니거나 끝이 100이 아니면 줌 상태)
     const opt = instance.getOption();
     if (opt.dataZoom && opt.dataZoom[0]) {
       const start = opt.dataZoom[0].start;
       const end = opt.dataZoom[0].end;
-      // 약간의 오차 허용 (0.1% 미만 차이는 무시)
       isZoomed.value = start > 0.1 || end < 99.9;
     }
   });
@@ -343,10 +390,11 @@ const chartOption = computed(() => {
     ? "rgba(255, 255, 255, 0.1)"
     : "rgba(0, 0, 0, 0.1)";
 
-  const timestamps = chartData.value.map((d) => formatDate(d.timestamp));
-  const xmm = chartData.value.map((d) => d.xmm);
-  const ymm = chartData.value.map((d) => d.ymm);
-  const notch = chartData.value.map((d) => d.notch);
+  // [수정] Time Axis(시간축) 사용을 위해 데이터를 [timestamp, value] 형태의 튜플 배열로 변환
+  // 기존: timestamps 배열 별도, values 배열 별도 -> 변경: 각 시리즈가 시간 정보를 포함
+  const xmmData = chartData.value.map((d) => [d.timestamp, d.xmm]);
+  const ymmData = chartData.value.map((d) => [d.timestamp, d.ymm]);
+  const notchData = chartData.value.map((d) => [d.timestamp, d.notch]);
 
   return {
     backgroundColor: "transparent",
@@ -359,9 +407,17 @@ const chartOption = computed(() => {
       textStyle: { color: isDarkMode.value ? "#fff" : "#1e293b" },
       formatter: (params: any) => {
         if (!params || !params[0]) return "";
-        let html = `<div class="font-bold mb-1 border-b border-gray-500 pb-1 text-xs">${params[0].axisValueLabel}</div>`;
+        
+        // [수정] Time Axis 데이터 구조([time, value])에 맞춰 툴팁 헤더 시간 포맷팅
+        const date = new Date(params[0].value[0]);
+        const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${String(
+          date.getHours()
+        ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
+        let html = `<div class="font-bold mb-1 border-b border-gray-500 pb-1 text-xs">${dateStr}</div>`;
         params.forEach((p: any) => {
-          const val = p.value !== undefined ? p.value.toFixed(4) : "-";
+          // p.value가 [time, value] 배열이므로 index 1을 참조
+          const val = p.value[1] !== undefined ? p.value[1].toFixed(4) : "-";
           const colorDot = `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:8px;height:8px;background-color:${p.color};"></span>`;
           html += `<div class="flex justify-between gap-4 text-xs mt-1"><span>${colorDot} ${p.seriesName}</span><span class="font-mono font-bold">${val}</span></div>`;
         });
@@ -371,28 +427,11 @@ const chartOption = computed(() => {
     legend: {
       show: true,
       top: 5,
-      left: 80, // 좌측 상단 배치
-      right: "auto",
+      left: "auto",
+      right: 10,
       textStyle: { color: textColor },
       itemGap: 15,
-      selectedMode: true, // 클릭 시 Hide/Show
-    },
-    // 마우스 드래그 줌 도구 (우측 상단)
-    toolbox: {
-      show: true,
-      right: 30,
-      top: 0,
-      feature: {
-        dataZoom: {
-          yAxisIndex: "none", // X축만 줌 (Y축 고정)
-          title: { zoom: "Drag Zoom", back: "Reset Zoom" },
-        },
-        restore: { show: false }, // 리셋 버튼은 별도 UI로 제공하므로 숨김
-        saveAsImage: { title: "Save Image" },
-      },
-      iconStyle: {
-        borderColor: textColor,
-      },
+      selectedMode: true,
     },
     grid: {
       left: 60,
@@ -401,9 +440,8 @@ const chartOption = computed(() => {
       bottom: 80,
       containLabel: false,
     },
-    // 마우스 휠, 드래그, 슬라이더 줌 설정
     dataZoom: [
-      { type: "inside", xAxisIndex: [0], filterMode: "filter" }, // 마우스 휠
+      { type: "inside", xAxisIndex: [0], filterMode: "filter" },
       {
         type: "slider",
         xAxisIndex: [0],
@@ -412,19 +450,32 @@ const chartOption = computed(() => {
         bottom: 10,
         borderColor: "transparent",
         backgroundColor: isDarkMode.value ? "#18181b" : "#f1f5f9",
-      }, // 하단 슬라이더
+      },
     ],
     xAxis: {
-      type: "category",
-      data: timestamps,
+      type: "time",
       boundaryGap: false,
       axisLabel: {
         color: textColor,
         fontSize: 10,
         rotate: 45,
-        hideOverlap: true,
+        hideOverlap: true, // [유지] 라벨 겹침 방지 (너무 조밀하지 않게 자동 조절)
+        
+        // [수정] 요청하신 "12-05 10:00" 형식 적용
+        formatter: (value: number) => {
+          const date = new Date(value);
+          
+          // 월, 일, 시, 분을 2자리(0채움)로 변환
+          const mm = String(date.getMonth() + 1).padStart(2, "0");
+          const dd = String(date.getDate()).padStart(2, "0");
+          const hh = String(date.getHours()).padStart(2, "0");
+          const min = String(date.getMinutes()).padStart(2, "0");
+          
+          return `${mm}-${dd} ${hh}:${min}`;
+        },
       },
       axisLine: { lineStyle: { color: gridColor } },
+      splitLine: { show: false } 
     },
     yAxis: [
       {
@@ -460,32 +511,32 @@ const chartOption = computed(() => {
       {
         name: "X (mm)",
         type: "line",
-        data: xmm,
+        data: xmmData, // [수정] 변환된 [시간, 값] 데이터 사용
         yAxisIndex: 0,
         showSymbol: false,
-        symbolSize: 4,
+        symbolSize: 2,
         itemStyle: { color: "#3b82f6" },
         lineStyle: { width: 1.5 },
       },
       {
         name: "Y (mm)",
         type: "line",
-        data: ymm,
+        data: ymmData, // [수정] 변환된 [시간, 값] 데이터 사용
         yAxisIndex: 0,
         showSymbol: false,
-        symbolSize: 4,
+        symbolSize: 2,
         itemStyle: { color: "#10b981" },
         lineStyle: { width: 1.5 },
       },
       {
         name: "Notch",
         type: "line",
-        data: notch,
+        data: notchData, // [수정] 변환된 [시간, 값] 데이터 사용
         yAxisIndex: 1,
         showSymbol: false,
-        symbolSize: 4,
+        symbolSize: 2,
         itemStyle: { color: "#f59e0b" },
-        lineStyle: { width: 1.5, type: "dashed" },
+        lineStyle: { width: 1.5 },
       },
     ],
   };
@@ -503,6 +554,7 @@ const formatDate = (dateStr: string) => {
 </script>
 
 <style scoped>
+/* 드롭다운 스타일 공통화 */
 :deep(.p-select),
 :deep(.custom-dropdown) {
   @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors;
@@ -522,12 +574,10 @@ const formatDate = (dateStr: string) => {
 :deep(.custom-dropdown:hover) {
   @apply !bg-slate-200 dark:!bg-zinc-800;
 }
-:deep(.p-select-dropdown),
-:deep(.p-autocomplete-dropdown) {
+:deep(.p-select-dropdown) {
   @apply text-slate-400 dark:text-zinc-500 w-6 !bg-transparent !border-0 !shadow-none;
 }
-:deep(.p-select-dropdown svg),
-:deep(.p-autocomplete-dropdown svg) {
+:deep(.p-select-dropdown svg) {
   @apply w-3 h-3;
 }
 
