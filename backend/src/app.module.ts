@@ -4,7 +4,8 @@ import { PrismaService } from './prisma.service';
 
 // Modules
 import { EquipmentModule } from './equipment/equipment.module';
-import { PreAlignModule } from './prealign/prealign.module'; // [추가]
+import { PreAlignModule } from './prealign/prealign.module';
+import { LampLifeModule } from './lamplife/lamplife.module';
 
 // Controllers & Services (기존 유지)
 import { DashboardController } from './dashboard/dashboard.controller';
@@ -21,7 +22,8 @@ import { WaferService } from './wafer/wafer.service';
 @Module({
   imports: [
     EquipmentModule,
-    PreAlignModule, // [추가] 모듈 등록
+    PreAlignModule,
+    LampLifeModule,
   ],
   controllers: [
     DashboardController,
