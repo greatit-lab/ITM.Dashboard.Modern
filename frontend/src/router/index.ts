@@ -8,8 +8,8 @@ import ErrorAnalyticsView from "../views/ErrorAnalyticsView.vue";
 import LampLifeView from "../views/LampLifeView.vue";
 import PreAlignAnalyticsView from "../views/PreAlignAnalyticsView.vue";
 import ProcessMemoryView from "../views/ProcessMemoryView.vue";
-// [추가] 새로운 분석 페이지 컴포넌트 임포트
 import SpectrumAnalysisView from "../views/SpectrumAnalysisView.vue";
+import LotUniformityTrendView from "../views/LotUniformityTrendView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,11 +34,15 @@ const router = createRouter({
       component: PreAlignAnalyticsView,
     },
     { path: "/process-memory", name: "process", component: ProcessMemoryView },
-    // [추가] Spectrum Analysis 라우트 등록
     {
       path: "/spectrum-analytics",
       name: "spectrum",
       component: SpectrumAnalysisView,
+    },
+    {
+      path: "/lot-uniformity-trend",
+      name: "lot-uniformity",
+      component: LotUniformityTrendView,
     },
   ],
 });
