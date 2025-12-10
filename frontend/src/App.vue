@@ -11,7 +11,7 @@
     >
       <Header />
 
-      <div class="flex-1 relative px-5 pb-8 pt-3">
+      <div class="flex-1 relative px-5 pb-0 pt-0">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
