@@ -122,8 +122,13 @@ export const waferApi = {
     return data;
   },
 
-  // 5. PDF 존재 여부 확인
-  checkPdf: async (eqpId: string, servTs: string) => {
+  // 5. PDF 존재 여부 확인 (파라미터 추가)
+  checkPdf: async (
+    eqpId: string, 
+    lotId: string,    // [추가]
+    waferId: number,  // [추가]
+    servTs: string
+  ) => {
     const dt =
       typeof servTs === "string"
         ? servTs
@@ -131,14 +136,16 @@ export const waferApi = {
 
     const { data } = await apiClient.get<{ exists: boolean }>(
       "/WaferData/checkpdf",
-      { params: { eqpId, servTs: dt } }
+      { params: { eqpId, lotId, waferId, servTs: dt } }
     );
     return data.exists;
   },
 
-  // 6. PDF 이미지 Base64 변환 조회
+  // 6. PDF 이미지 Base64 변환 조회 (파라미터 추가)
   getPdfImageBase64: async (
     eqpId: string,
+    lotId: string,    // [추가]
+    waferId: number,  // [추가]
     dateTime: string,
     pointNumber: number
   ) => {
@@ -149,6 +156,8 @@ export const waferApi = {
 
     const params = {
       eqpId,
+      lotId,    // [추가]
+      waferId,  // [추가]
       dateTime: dt,
       pointNumber,
     };
