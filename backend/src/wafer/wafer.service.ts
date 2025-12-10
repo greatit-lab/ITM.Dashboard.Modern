@@ -710,7 +710,7 @@ export class WaferService {
 
     try {
       const ts = typeof servTs === 'string' ? servTs : servTs.toISOString();
-      
+
       // SQL 수정: lotid, waferid 조건 제거 (컬럼 없을 수 있음)
       // 대신 날짜 범위 내의 모든 후보를 가져와서 JavaScript로 필터링
       const results = await this.prisma.$queryRawUnsafe<PdfResult[]>(
@@ -720,7 +720,7 @@ export class WaferService {
            AND datetime <= $2::timestamp + interval '24 hours'
          ORDER BY datetime DESC`,
         eqpId,
-        ts
+        ts,
       );
 
       if (!results || results.length === 0) {
@@ -732,36 +732,149 @@ export class WaferService {
         const targetLot = lotId.trim();
         const targetLotUnderscore = targetLot.replace(/\./g, '_'); // "ABC.1" -> "ABC_1" 대응
 
-        const matched = results.find(r => {
-            if (!r.file_uri) return false;
-            const uri = r.file_uri;
-            
-            // Lot ID 포함 여부 확인
-            const hasLot = uri.includes(targetLot) || uri.includes(targetLotUnderscore);
-            
-            // Wafer ID 포함 여부 확인 (숫자로 존재하면 체크)
-            let hasWafer = true;
-            if (waferId) {
-                // WaferID가 간단한 숫자(예: 1)일 경우 다른 숫자에 포함될 수 있으므로 주의가 필요하지만,
-                // 보통 파일명 패턴이 _W01_ 등으로 되어있으므로 단순 포함 여부 체크
-                hasWafer = uri.includes(String(waferId));
-            }
+        const matched = results.find((r) => {
+          if (!r.file_uri) return false;
+          const uri = r.file_uri;
 
-            return hasLot && hasWafer;
+          // Lot ID 포함 여부 확인
+          const hasLot =
+            uri.includes(targetLot) || uri.includes(targetLotUnderscore);
+
+          // Wafer ID 포함 여부 확인 (숫자로 존재하면 체크)
+          let hasWafer = true;
+          if (waferId) {
+            // WaferID가 간단한 숫자(예: 1)일 경우 다른 숫자에 포함될 수 있으므로 주의가 필요하지만,
+            // 보통 파일명 패턴이 _W01_ 등으로 되어있으므로 단순 포함 여부 체크
+            hasWafer = uri.includes(String(waferId));
+          }
+
+          return hasLot && hasWafer;
         });
 
         if (matched) {
-            return { exists: true, url: matched.file_uri };
+          return { exists: true, url: matched.file_uri };
         }
       } else {
         // Lot ID 정보가 없으면 가장 최신 파일 반환 (Fallback)
         return { exists: true, url: results[0].file_uri };
       }
-
     } catch (e) {
       console.warn(`Failed to check PDF for ${String(eqpId)}:`, e);
     }
     return { exists: false, url: null };
+  }
+
+async getResidualMap(params: WaferQueryParams): Promise<ResidualMapItem[]> {
+    const { eqpId, lotId, waferId, ts } = params;
+    if (!eqpId || !lotId || !waferId || !ts) return [];
+
+    const targetDate = new Date(ts);
+    const tsRaw = targetDate.toISOString();
+
+    const rawData = await this.prisma.$queryRawUnsafe<ResidualRawResult[]>(
+      `SELECT s.point, f.x, f.y, s.class, s.values 
+       FROM public.plg_onto_spectrum s
+       JOIN public.plg_wf_flat f 
+         ON s.eqpid = f.eqpid 
+         AND s.lotid = f.lotid 
+         AND s.waferid = f.waferid::varchar 
+         AND s.point = f.point
+       WHERE s.eqpid = $1 
+         AND s.ts >= $2::timestamp - interval '2 second'
+         AND s.ts <= $2::timestamp + interval '2 second'
+         AND f.serv_ts >= $2::timestamp - interval '5 second'
+         AND f.serv_ts <= $2::timestamp + interval '5 second'
+         AND s.lotid = $3 
+         AND s.waferid = $4`,
+      eqpId,
+      tsRaw,
+      lotId,
+      String(waferId),
+    );
+
+    const mapData: Map<
+      number,
+      { exp: number[]; gen: number[]; x: number; y: number }
+    > = new Map();
+
+    rawData.forEach((r) => {
+      if (!mapData.has(r.point)) {
+        mapData.set(r.point, {
+          exp: [],
+          gen: [],
+          x: r.x || 0,
+          y: r.y || 0,
+        });
+      }
+      const item = mapData.get(r.point);
+      if (item) {
+        if (r.class.toLowerCase() === 'exp') item.exp = r.values || [];
+        if (r.class.toLowerCase() === 'gen') item.gen = r.values || [];
+      }
+    });
+
+    const result: ResidualMapItem[] = [];
+    mapData.forEach((val, point) => {
+      if (
+        val.exp.length > 0 &&
+        val.gen.length > 0 &&
+        val.exp.length === val.gen.length
+      ) {
+        const sumDiff = val.exp.reduce(
+          (acc, curr, idx) => acc + Math.abs(curr - val.gen[idx]),
+          0,
+        );
+        result.push({ point, x: val.x, y: val.y, residual: sumDiff });
+      }
+    });
+
+    return result;
+  }
+
+  async getGoldenSpectrum(params: WaferQueryParams) {
+    const { eqpId, cassetteRcp, stageGroup, film } = params;
+
+    const samples = await this.prisma.$queryRawUnsafe<GoldenRawResult[]>(
+      `SELECT s.wavelengths, s.values
+       FROM public.plg_onto_spectrum s
+       JOIN public.plg_wf_flat f 
+         ON s.eqpid = f.eqpid AND s.lotid = f.lotid AND s.waferid = f.waferid::varchar AND s.point = f.point
+       WHERE s.class = 'exp'
+         AND f.eqpid = $1
+         AND f.cassettercp = $2
+         AND f.stagegroup = $3
+         AND f.film = $4
+         AND f.gof >= 0.98
+         AND f.serv_ts >= NOW() - INTERVAL '7 days'
+       LIMIT 50`,
+      eqpId,
+      cassetteRcp || '',
+      stageGroup || '',
+      film || '',
+    );
+
+    if (samples.length === 0) return null;
+
+    const baseWavelengths = samples[0].wavelengths;
+    const valueSums: number[] = Array.from(
+      { length: baseWavelengths.length },
+      () => 0,
+    );
+    let count = 0;
+
+    samples.forEach((sample) => {
+      if (sample.values && sample.values.length === baseWavelengths.length) {
+        sample.values.forEach((v: number, i: number) => (valueSums[i] += v));
+        count++;
+      }
+    });
+
+    if (count === 0) return null;
+
+    return {
+      wavelengths: baseWavelengths,
+      values: valueSums.map((v) => v / count),
+    };
   }
 
   async getAvailableMetrics(params: WaferQueryParams): Promise<string[]> {
