@@ -7,9 +7,7 @@
       <div
         class="flex items-center justify-center w-8 h-8 bg-white border rounded-lg shadow-sm dark:bg-zinc-900 border-slate-100 dark:border-zinc-800"
       >
-        <i
-          class="text-lg text-rose-500 pi pi-exclamation-circle dark:text-rose-400"
-        ></i>
+        <i class="text-lg text-rose-500 pi pi-bell dark:text-rose-400"></i>
       </div>
       <div class="flex items-baseline gap-2">
         <h1
