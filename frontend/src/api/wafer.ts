@@ -203,10 +203,16 @@ export const waferApi = {
     return data;
   },
 
-  // [추가됨] 12. Spectrum Analysis Trend 조회
+  // [신규] 12. 실제 포인트 목록 조회
+  getPoints: async (params: any) => {
+    const { data } = await apiClient.get<string[]>("/WaferData/points", {
+      params,
+    });
+    return data;
+  },
+
+  // [신규] 13. Spectrum Analysis Trend 조회 (실제 데이터)
   getSpectrumTrend: async (params: any) => {
-    // Backend Controller에 @Get('trend/spectrum') 엔드포인트가 있어야 함
-    // params: { lotId, pointId, waferIds }
     const { data } = await apiClient.get<SpectrumSeriesDto[]>(
       "/WaferData/trend/spectrum",
       { params }
