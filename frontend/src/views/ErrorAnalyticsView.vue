@@ -554,7 +554,11 @@ const onSdwtChange = async () => {
   if (filter.sdwt) {
     localStorage.setItem("error_sdwt", filter.sdwt);
     // [수정] type: 'error' 전달
-    eqpIds.value = await equipmentApi.getEqpIds(undefined, filter.sdwt, 'error');
+    eqpIds.value = await equipmentApi.getEqpIds(
+      undefined,
+      filter.sdwt,
+      'error'
+    );
   } else {
     localStorage.removeItem("error_sdwt");
     eqpIds.value = [];
@@ -917,4 +921,5 @@ const formatDate = (dateStr: string, short = false, twoDigitYear = false) => {
   }
 }
 </style>
+
 
