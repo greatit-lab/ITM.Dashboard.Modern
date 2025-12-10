@@ -66,12 +66,14 @@
             filter
             class="w-full custom-dropdown small"
             overlayClass="custom-dropdown-panel small"
-            @change="onEqpIdChange" 
+            @change="onEqpIdChange"
           />
         </div>
       </div>
 
-      <div class="flex items-center gap-1 pr-1 ml-auto border-l border-slate-100 dark:border-zinc-800 pl-2">
+      <div
+        class="flex items-center gap-1 pr-1 ml-auto border-l border-slate-100 dark:border-zinc-800 pl-2"
+      >
         <Button
           icon="pi pi-refresh"
           rounded
@@ -167,7 +169,9 @@
           </div>
         </div>
 
-        <div class="flex-1 w-0 min-w-full overflow-hidden relative">
+        <div
+          class="flex-1 w-0 min-w-full overflow-hidden relative equip-table-container"
+        >
           <DataTable
             :value="filteredRecords"
             :first="first"
@@ -182,21 +186,13 @@
           >
             <ColumnGroup type="header">
               <Row>
-                <Column
-                  header="Status"
-                  :rowspan="2"
-                  frozen
-                  style="width: 60px"
-                  class="p-frozen-column"
-                />
+                <Column header="Status" :rowspan="2" style="width: 60px" />
                 <Column
                   header="EQP ID"
                   :rowspan="2"
-                  frozen
                   sortable
                   field="eqpId"
                   style="width: 120px"
-                  class="p-frozen-column"
                 />
                 <Column
                   header="ITM INFO"
@@ -313,7 +309,7 @@
               </Row>
             </ColumnGroup>
 
-            <Column frozen header="Status" class="p-frozen-column">
+            <Column header="Status">
               <template #body="{ data }">
                 <div class="flex justify-center">
                   <span
@@ -339,25 +335,22 @@
 
             <Column
               field="eqpId"
-              frozen
-              class="font-bold text-slate-700 dark:text-slate-200 p-frozen-column"
+              class="font-bold text-slate-700 dark:text-slate-200"
             ></Column>
 
             <Column field="type">
               <template #body="{ data }">
-                <span
-                  class="font-medium text-slate-600 dark:text-slate-300"
-                  >{{ data.type }}</span
-                >
+                <span class="font-medium text-slate-600 dark:text-slate-300">{{
+                  data.type
+                }}</span>
               </template>
             </Column>
             <Column field="systemModel"></Column>
             <Column field="application">
               <template #body="{ data }">
-                <span
-                  class="font-bold text-slate-700 dark:text-slate-200"
-                  >{{ data.application }}</span
-                >
+                <span class="font-bold text-slate-700 dark:text-slate-200">{{
+                  data.application
+                }}</span>
               </template>
             </Column>
             <Column field="version">
@@ -374,9 +367,7 @@
             </Column>
             <Column field="serialNum">
               <template #body="{ data }">
-                <span class="font-mono text-[10px]">{{
-                  data.serialNum
-                }}</span>
+                <span class="font-mono text-[10px]">{{ data.serialNum }}</span>
               </template>
             </Column>
 
@@ -421,9 +412,7 @@
 
             <Column field="cpu">
               <template #body="{ data }">
-                <span :title="data.cpu">{{
-                  formatSimpleCpu(data.cpu)
-                }}</span>
+                <span :title="data.cpu">{{ formatSimpleCpu(data.cpu) }}</span>
               </template>
             </Column>
             <Column field="memory"></Column>
@@ -518,7 +507,6 @@ const filteredRecords = computed(() => {
 const totalRecords = computed(() => filteredRecords.value.length);
 
 // Lifecycle
-// [수정] onMounted에서 localStorage 값을 확인하여 복원하는 로직 추가
 onMounted(async () => {
   try {
     sites.value = await dashboardApi.getSites();
@@ -539,7 +527,9 @@ onMounted(async () => {
         const savedEqpId = localStorage.getItem("explorer_eqpid");
         if (savedEqpId) {
           // 로드된 리스트에 해당 ID가 있는지 확인
-          const exists = equipmentList.value.some(e => e.eqpId === savedEqpId);
+          const exists = equipmentList.value.some(
+            (e) => e.eqpId === savedEqpId
+          );
           if (exists) {
             selectedEqpId.value = savedEqpId;
           } else {
@@ -567,7 +557,7 @@ const onSiteChange = async () => {
     localStorage.removeItem("explorer_site");
     sdwts.value = [];
   }
-  
+
   // 하위 필터 초기화
   selectedSdwt.value = "";
   localStorage.removeItem("explorer_sdwt");
@@ -585,7 +575,7 @@ const onSdwtChange = async () => {
     localStorage.removeItem("explorer_sdwt");
     equipmentList.value = [];
   }
-  
+
   // 하위 필터 초기화
   selectedEqpId.value = "";
   localStorage.removeItem("explorer_eqpid");
@@ -607,7 +597,7 @@ const loadEquipmentData = async () => {
   isLoading.value = true;
   try {
     equipmentList.value = await equipmentApi.getDetails(
-      undefined, 
+      undefined,
       selectedSdwt.value
     );
   } catch (e) {
@@ -622,7 +612,7 @@ const resetFilters = () => {
   selectedSite.value = "";
   selectedSdwt.value = "";
   selectedEqpId.value = "";
-  
+
   // [추가] 저장소 초기화
   localStorage.removeItem("explorer_site");
   localStorage.removeItem("explorer_sdwt");
@@ -658,12 +648,12 @@ const formatOS = (os: string, sys: string) => {
 };
 
 const getOsIconClass = (os: string | null) => {
-    const lowerOs = (os || '').toLowerCase();
-    if (lowerOs.includes('11')) return 'text-indigo-500';
-    if (lowerOs.includes('10')) return 'text-blue-500';
-    if (lowerOs.includes('server')) return 'text-slate-500';
-    if (lowerOs.includes('7')) return 'text-amber-500';
-    return 'text-slate-400';
+  const lowerOs = (os || "").toLowerCase();
+  if (lowerOs.includes("11")) return "text-indigo-500";
+  if (lowerOs.includes("10")) return "text-blue-500";
+  if (lowerOs.includes("server")) return "text-slate-500";
+  if (lowerOs.includes("7")) return "text-amber-500";
+  return "text-slate-400";
 };
 
 const formatSimpleCpu = (cpu: string) => {
@@ -766,21 +756,7 @@ const copyToClipboard = async (text: string) => {
   white-space: nowrap;
 }
 
-/* Sticky(Frozen) Column Background Fix */
-:deep(.p-datatable .p-frozen-column) {
-    background-color: #ffffff !important; 
-    z-index: 10;
-}
-:deep(.p-datatable-thead > tr > th.p-frozen-column) {
-    background-color: #ffffff !important;
-    z-index: 20; 
-}
-:deep(.dark .p-datatable .p-frozen-column) {
-    background-color: #18181b !important;
-}
-:deep(.dark .p-datatable-thead > tr > th.p-frozen-column) {
-    background-color: #18181b !important;
-}
+/* ❌ Sticky(Frozen) Column 관련 CSS 삭제됨 ❌ */
 
 /* Dropdown & Input Styles */
 :deep(.p-select),
