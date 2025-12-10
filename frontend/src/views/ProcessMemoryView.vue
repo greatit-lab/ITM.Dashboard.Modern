@@ -28,7 +28,7 @@
     </div>
 
     <div
-      class="mb-3 bg-white dark:bg-[#111111] p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2 shadow-sm transition-colors duration-300 shrink-0"
+      class="mb-5 bg-white dark:bg-[#111111] p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2 shadow-sm transition-colors duration-300 shrink-0"
     >
       <div
         class="flex items-center flex-1 gap-2 px-1 py-1 overflow-x-auto scrollbar-hide"
@@ -190,7 +190,7 @@
           </div>
         </div>
 
-        <div class="overflow-auto custom-scrollbar" style="max-height: 300px;">
+        <div class="overflow-auto custom-scrollbar" style="max-height: 300px">
           <table
             class="w-full text-xs text-left text-slate-600 dark:text-slate-400 table-fixed"
           >
@@ -354,9 +354,9 @@ const sites = ref<string[]>([]);
 const sdwts = ref<string[]>([]);
 const eqpIds = ref<string[]>([]);
 
-const chartData = ref<any[]>([]); 
-const processSeries = ref<any[]>([]); 
-const processStats = ref<ProcessStat[]>([]); 
+const chartData = ref<any[]>([]);
+const processSeries = ref<any[]>([]);
+const processStats = ref<ProcessStat[]>([]);
 const displayedProcessCount = ref(0);
 
 const isLoading = ref(false);
@@ -370,8 +370,16 @@ const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 let themeObserver: MutationObserver | null = null;
 
 const colorPalette = [
-  "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", 
-  "#ec4899", "#6366f1", "#14b8a6", "#f97316", "#84cc16", 
+  "#8b5cf6",
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#6366f1",
+  "#14b8a6",
+  "#f97316",
+  "#84cc16",
 ];
 
 // ... (Lifecycle, Handlers, searchData 기존 유지) ...
@@ -398,7 +406,10 @@ onMounted(async () => {
       }
     });
   });
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 });
 
 onUnmounted(() => {
@@ -410,7 +421,9 @@ const onSiteChange = async () => {
   localStorage.setItem("dashboard_site", filterStore.selectedSite);
   selectedEqpId.value = "";
   localStorage.removeItem("process_eqpid");
-  sdwts.value = filterStore.selectedSite ? await dashboardApi.getSdwts(filterStore.selectedSite) : [];
+  sdwts.value = filterStore.selectedSite
+    ? await dashboardApi.getSdwts(filterStore.selectedSite)
+    : [];
   eqpIds.value = [];
   hasSearched.value = false;
 };
@@ -428,7 +441,8 @@ const onSdwtChange = async () => {
 };
 
 const onEqpIdChange = () => {
-  if (selectedEqpId.value) localStorage.setItem("process_eqpid", selectedEqpId.value);
+  if (selectedEqpId.value)
+    localStorage.setItem("process_eqpid", selectedEqpId.value);
   else localStorage.removeItem("process_eqpid");
 };
 
@@ -461,7 +475,7 @@ const searchData = async () => {
 
     const diffMs = fixedEnd.getTime() - fixedStart.getTime();
     const diffDays = diffMs / (1000 * 3600 * 24);
-    let fetchInterval = 60; 
+    let fetchInterval = 60;
     if (diffDays <= 1) fetchInterval = 60;
     else if (diffDays <= 3) fetchInterval = 300;
     else if (diffDays <= 7) fetchInterval = 600;
@@ -492,14 +506,17 @@ const processData = (data: ProcessMemoryDataDto[]) => {
     return;
   }
 
-  const procMap = new Map<string, { max: number; latest: number; dataPoints: number }>();
+  const procMap = new Map<
+    string,
+    { max: number; latest: number; dataPoints: number }
+  >();
   const timestamps = data.map((d) => new Date(d.timestamp).getTime());
   const maxTs = Math.max(...timestamps);
 
   data.forEach((d) => {
     // [수정] 데이터 안전 처리: 숫자로 확실하게 변환
     const memVal = Number(d.memoryUsageMB) || 0;
-    
+
     if (!procMap.has(d.processName)) {
       procMap.set(d.processName, { max: 0, latest: 0, dataPoints: 0 });
     }
@@ -512,10 +529,18 @@ const processData = (data: ProcessMemoryDataDto[]) => {
     }
   });
 
-  const allProcs = Array.from(procMap.entries()).map(([name, stats]) => ({ name, ...stats }));
+  const allProcs = Array.from(procMap.entries()).map(([name, stats]) => ({
+    name,
+    ...stats,
+  }));
   const topByMax = [...allProcs].sort((a, b) => b.max - a.max).slice(0, 5);
-  const topByLatest = [...allProcs].sort((a, b) => b.latest - a.latest).slice(0, 5);
-  const targetProcesses = new Set([...topByMax.map((p) => p.name), ...topByLatest.map((p) => p.name)]);
+  const topByLatest = [...allProcs]
+    .sort((a, b) => b.latest - a.latest)
+    .slice(0, 5);
+  const targetProcesses = new Set([
+    ...topByMax.map((p) => p.name),
+    ...topByLatest.map((p) => p.name),
+  ]);
 
   displayedProcessCount.value = targetProcesses.size;
 
@@ -553,10 +578,15 @@ const processData = (data: ProcessMemoryDataDto[]) => {
 
     const pData = data.filter((d) => d.processName === name);
     // [수정] reduce 합계 계산 시 안전하게 Number 변환
-    const sum = pData.reduce((acc, cur) => acc + (Number(cur.memoryUsageMB) || 0), 0);
+    const sum = pData.reduce(
+      (acc, cur) => acc + (Number(cur.memoryUsageMB) || 0),
+      0
+    );
     const max = Math.max(...pData.map((d) => Number(d.memoryUsageMB) || 0));
-    const last = pData.sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    const last =
+      pData.sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       )[0]?.memoryUsageMB || 0;
 
     stats.push({
@@ -587,7 +617,10 @@ const resetFilters = () => {
 
 const formattedPeriod = computed(() => {
   if (!startDate.value || !endDate.value) return "";
-  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,"0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
   return `${fmt(startDate.value)} ~ ${fmt(endDate.value)}`;
 });
 
@@ -599,12 +632,16 @@ const formatNumber = (val: any) => {
 
 const chartOption = computed(() => {
   const textColor = isDarkMode.value ? "#cbd5e1" : "#475569";
-  const gridColor = isDarkMode.value ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+  const gridColor = isDarkMode.value
+    ? "rgba(255, 255, 255, 0.1)"
+    : "rgba(0, 0, 0, 0.1)";
   return {
     backgroundColor: "transparent",
     tooltip: {
       trigger: "axis",
-      backgroundColor: isDarkMode.value ? "rgba(24, 24, 27, 0.9)" : "rgba(255, 255, 255, 0.95)",
+      backgroundColor: isDarkMode.value
+        ? "rgba(24, 24, 27, 0.9)"
+        : "rgba(255, 255, 255, 0.95)",
       borderColor: isDarkMode.value ? "#3f3f46" : "#e2e8f0",
       textStyle: { color: isDarkMode.value ? "#fff" : "#1e293b" },
       formatter: (params: any) => {
@@ -612,41 +649,67 @@ const chartOption = computed(() => {
         const xDate = new Date(params[0].axisValueLabel);
         const timeStr = isNaN(xDate.getTime())
           ? params[0].axisValueLabel
-          : `${String(xDate.getHours()).padStart(2, "0")}:${String(xDate.getMinutes()).padStart(2, "0")}`;
+          : `${String(xDate.getHours()).padStart(2, "0")}:${String(
+              xDate.getMinutes()
+            ).padStart(2, "0")}`;
         let html = `<div class="font-bold mb-1 border-b border-gray-500 pb-1">${timeStr}</div>`;
-        const sortedParams = [...params].sort((a, b) => (b.value[b.seriesName] || 0) - (a.value[a.seriesName] || 0));
+        const sortedParams = [...params].sort(
+          (a, b) => (b.value[b.seriesName] || 0) - (a.value[a.seriesName] || 0)
+        );
         sortedParams.forEach((p: any) => {
           const val = p.value[p.seriesName];
           if (val !== undefined) {
             const colorDot = `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:${p.color};"></span>`;
-            html += `<div class="flex justify-between items-center gap-4 text-xs"><span>${colorDot} ${p.seriesName}</span><span class="font-mono font-bold">${Number(val).toLocaleString()} MB</span></div>`;
+            html += `<div class="flex justify-between items-center gap-4 text-xs"><span>${colorDot} ${
+              p.seriesName
+            }</span><span class="font-mono font-bold">${Number(
+              val
+            ).toLocaleString()} MB</span></div>`;
           }
         });
         return html;
       },
     },
     legend: {
-      show: true, type: "scroll", orient: "vertical", right: 10, top: "middle", itemGap: 10,
-      textStyle: { color: textColor, fontSize: 11, overflow: "truncate", width: 130 },
-      pageIconColor: textColor, pageTextStyle: { color: textColor },
+      show: true,
+      type: "scroll",
+      orient: "vertical",
+      right: 10,
+      top: "middle",
+      itemGap: 10,
+      textStyle: {
+        color: textColor,
+        fontSize: 11,
+        overflow: "truncate",
+        width: 130,
+      },
+      pageIconColor: textColor,
+      pageTextStyle: { color: textColor },
     },
     grid: { left: 60, right: 170, top: 30, bottom: 30 },
     dataZoom: [{ type: "inside", xAxisIndex: [0], filterMode: "filter" }],
     dataset: { source: chartData.value },
     xAxis: {
-      type: "category", boundaryGap: false,
+      type: "category",
+      boundaryGap: false,
       axisLabel: {
-        color: textColor, fontSize: 10,
+        color: textColor,
+        fontSize: 10,
         formatter: (value: string) => {
           const d = new Date(value);
           if (isNaN(d.getTime())) return value;
-          return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+          return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+            d.getDate()
+          ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
+            d.getMinutes()
+          ).padStart(2, "0")}`;
         },
       },
       axisLine: { lineStyle: { color: gridColor } },
     },
     yAxis: {
-      type: "value", name: "Memory (MB)",
+      type: "value",
+      name: "Memory (MB)",
       nameTextStyle: { color: textColor, padding: [0, 0, 0, 20] },
       axisLabel: { color: textColor, fontSize: 10 },
       splitLine: { lineStyle: { color: gridColor } },
@@ -677,24 +740,64 @@ const resetZoom = () => {
 
 <style scoped>
 /* Style omitted for brevity - same as before */
-:deep(.p-select), :deep(.custom-dropdown) { @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors; }
-:deep(.custom-dropdown .p-select-label) { @apply text-[13px] py-[5px] px-3; }
-:deep(.custom-input-text.small) { @apply !text-[13px] !p-1 !h-7 !bg-transparent !border-0; }
-:deep(.date-picker .p-inputtext) { @apply !text-[13px] !py-1 !px-2 !h-7; }
-:deep(.p-select-clear-icon), :deep(.p-datepicker-clear-icon) { @apply text-[9px] text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300; }
-:deep(.custom-dropdown.small) { @apply h-7; }
-:deep(.custom-dropdown:hover) { @apply !bg-slate-200 dark:!bg-zinc-800; }
-:deep(.p-select-dropdown), :deep(.p-autocomplete-dropdown) { @apply text-slate-400 dark:text-zinc-500 w-6 !bg-transparent !border-0 !shadow-none; }
-:deep(.p-select-dropdown svg) { @apply w-3 h-3; }
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+:deep(.p-select),
+:deep(.custom-dropdown) {
+  @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors;
+}
+:deep(.custom-dropdown .p-select-label) {
+  @apply text-[13px] py-[5px] px-3;
+}
+:deep(.custom-input-text.small) {
+  @apply !text-[13px] !p-1 !h-7 !bg-transparent !border-0;
+}
+:deep(.date-picker .p-inputtext) {
+  @apply !text-[13px] !py-1 !px-2 !h-7;
+}
+:deep(.p-select-clear-icon),
+:deep(.p-datepicker-clear-icon) {
+  @apply text-[9px] text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300;
+}
+:deep(.custom-dropdown.small) {
+  @apply h-7;
+}
+:deep(.custom-dropdown:hover) {
+  @apply !bg-slate-200 dark:!bg-zinc-800;
+}
+:deep(.p-select-dropdown),
+:deep(.p-autocomplete-dropdown) {
+  @apply text-slate-400 dark:text-zinc-500 w-6 !bg-transparent !border-0 !shadow-none;
+}
+:deep(.p-select-dropdown svg) {
+  @apply w-3 h-3;
+}
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 </style>
-
-
-
-
