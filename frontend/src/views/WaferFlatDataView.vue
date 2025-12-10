@@ -659,7 +659,7 @@
 
       <div class="w-[450px] shrink-0 flex flex-col gap-4 h-full">
         <div
-          class="h-[420px] shrink-0 rounded-xl dark:border-zinc-800 relative flex flex-col items-center justify-center p-5 overflow-hidden"
+          class="h-[420px] shrink-0 rounded-xl dark:border-zinc-800 relative flex flex-col items-center justify-center p-7 overflow-hidden"
         >
           <div
             class="absolute top-3 left-4 text-sm font-bold text-slate-700 dark:text-slate-200 z-10 flex items-center"
@@ -1540,3 +1540,4 @@ table td {
   font-size: 11px !important;
 }
 </style>
+
