@@ -835,7 +835,6 @@ import type { ECharts } from "echarts";
 
 // PrimeVue Components
 import Select from "primevue/select";
-// AutoComplete import 제거됨
 import DatePicker from "primevue/datepicker";
 import Button from "primevue/button";
 import DataTable from "primevue/datatable";
@@ -862,7 +861,6 @@ const filters = reactive({
 });
 
 const eqpIds = ref<string[]>([]);
-// filtered* 변수 제거됨 (Select 내부 필터 사용)
 const lotIds = ref<string[]>([]);
 const waferIds = ref<string[]>([]);
 const cassetteRcps = ref<string[]>([]);
@@ -1129,13 +1127,14 @@ const onSdwtChange = () => {
 
 const loadEqpIds = async () => {
   if (filterStore.selectedSdwt)
+    // [수정] Wafer 페이지이므로 type: 'wafer' 전달
     eqpIds.value = await equipmentApi.getEqpIds(
       undefined,
-      filterStore.selectedSdwt
+      filterStore.selectedSdwt,
+      'wafer'
     );
 };
 
-// AutoComplete용 Select 이벤트 핸들러 제거 및 Select용 핸들러 통합
 const onEqpChange = () => {
   if (filters.eqpId) {
     localStorage.setItem("dashboard_eqpid", filters.eqpId);
@@ -1186,8 +1185,6 @@ const loadFilterOptions = async () => {
   stageGroups.value = sGrps;
   films.value = filmsList;
 };
-
-// AutoComplete용 search 함수 제거됨
 
 const searchData = async () => {
   first.value = 0;
@@ -1263,7 +1260,8 @@ const onRowSelect = async (event: any) => {
     const [stats, pts, pdfCheck] = await Promise.all([
       waferApi.getStatistics(params),
       waferApi.getPointData(params),
-      waferApi.checkPdf(row.eqpId, row.servTs),
+      // [수정] lotId, waferId 전달
+      waferApi.checkPdf(row.eqpId, row.lotId, row.waferId, row.servTs),
     ]);
     statistics.value = stats;
     pointData.value = pts;
@@ -1282,8 +1280,11 @@ const loadPointImage = async (pointValue: number) => {
   pdfImageUrl.value = null;
 
   try {
+    // [수정] selectedRow에서 lotId, waferId 추출
     const base64 = await waferApi.getPdfImageBase64(
       selectedRow.value.eqpId,
+      selectedRow.value.lotId,    // [추가]
+      selectedRow.value.waferId,  // [추가]
       selectedRow.value.dateTime,
       pointValue
     );
@@ -1539,4 +1540,3 @@ table td {
   font-size: 11px !important;
 }
 </style>
-
