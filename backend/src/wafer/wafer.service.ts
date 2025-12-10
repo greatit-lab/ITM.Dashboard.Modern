@@ -432,13 +432,18 @@ export class WaferService {
       // 1. Header Check
       const headers = response.headers as Record<string, unknown>;
       const contentType = headers['content-type'];
-      
+
       // 만약 content-type이 확실히 text/html 등으로 오면 여기서 1차 필터링 가능
       // (일부 레거시 서버는 PDF임에도 application/octet-stream 등을 줄 수 있으므로 'pdf' 포함 여부만 체크)
-      if (typeof contentType === 'string' && contentType.toLowerCase().includes('html')) {
-         writer.close();
-         if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
-         throw new Error(`Invalid content-type: ${contentType}. Server returned HTML instead of PDF.`);
+      if (
+        typeof contentType === 'string' &&
+        contentType.toLowerCase().includes('html')
+      ) {
+        writer.close();
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+        throw new Error(
+          `Invalid content-type: ${contentType}. Server returned HTML instead of PDF.`,
+        );
       }
 
       (response.data as Readable).pipe(writer);
@@ -459,9 +464,13 @@ export class WaferService {
 
         // PDF 파일 시그니처 체크 (%PDF)
         if (bytesRead < 4 || !headerString.startsWith('%PDF')) {
-            // 디버깅을 위해 다운로드된 파일 내용의 앞부분을 로그에 출력
-            console.error(`[PDF Signature Error] First 100 chars of downloaded file: \n${headerString}`);
-            throw new Error(`File signature mismatch. The downloaded file is NOT a PDF. Content starts with: ${headerString.substring(0, 50)}...`);
+          // 디버깅을 위해 다운로드된 파일 내용의 앞부분을 로그에 출력
+          console.error(
+            `[PDF Signature Error] First 100 chars of downloaded file: \n${headerString}`,
+          );
+          throw new Error(
+            `File signature mismatch. The downloaded file is NOT a PDF. Content starts with: ${headerString.substring(0, 50)}...`,
+          );
         }
       } catch (checkErr) {
         if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
@@ -469,7 +478,9 @@ export class WaferService {
       }
 
       // 3. Poppler 변환
-      const popplerBinPath = process.env.POPPLER_BIN_PATH || 'F:\\Workspaces\\WEB\\ITM.Dashboard.Modern\\poppler-25.11.0\\Library\\bin';
+      const popplerBinPath =
+        process.env.POPPLER_BIN_PATH ||
+        'F:\\Workspaces\\WEB\\ITM.Dashboard.Modern\\poppler-25.11.0\\Library\\bin';
       const targetPage = Number(pointNumber);
 
       const opts = {
@@ -489,7 +500,9 @@ export class WaferService {
       );
 
       if (!generatedImageName) {
-        throw new Error('Image generation failed (poppler did not output png).');
+        throw new Error(
+          'Image generation failed (poppler did not output png).',
+        );
       }
 
       const generatedImagePath = path.join(os.tmpdir(), generatedImageName);
@@ -497,18 +510,29 @@ export class WaferService {
       try {
         fs.copyFileSync(generatedImagePath, cacheFilePath);
         fs.unlinkSync(generatedImagePath);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
-      const finalPath = fs.existsSync(cacheFilePath) ? cacheFilePath : generatedImagePath;
+      const finalPath = fs.existsSync(cacheFilePath)
+        ? cacheFilePath
+        : generatedImagePath;
       const imageBuffer = fs.readFileSync(finalPath);
       const base64Image = imageBuffer.toString('base64');
 
-      try { if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath); } catch { /* ignore */ }
+      try {
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+      } catch {
+        /* ignore */
+      }
 
       return base64Image;
-
     } catch (e) {
-      try { if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath); } catch { /* ignore */ }
+      try {
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+      } catch {
+        /* ignore */
+      }
 
       const error = e as { code?: string; message?: string };
       console.error(`[ERROR] PDF Processing Failed. URL: ${encodedUrl}`, e);
