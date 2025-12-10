@@ -1,7 +1,7 @@
  <!-- frontend/src/views/PreAlignAnalyticsView.vue -->
 <template>
   <div
-    class="flex flex-col h-full w-full font-sans transition-colors duration-500 bg-[#F8FAFC] dark:bg-[#09090B]"
+    class="flex flex-col h-full w-full font-sans transition-colors duration-500 bg-[#F8FAFC] dark:bg-[#09090B] overflow-hidden"
   >
     <div class="flex items-center gap-2 px-1 mb-2 shrink-0">
       <div
@@ -588,5 +588,6 @@ const chartOption = computed(() => {
   }
 }
 </style>
+
 
 
