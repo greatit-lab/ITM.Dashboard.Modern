@@ -255,7 +255,11 @@ onMounted(async () => {
     if (savedSdwt) {
       filter.sdwt = savedSdwt;
       // SDWT에 해당하는 EQP 목록 로드
-      eqpIds.value = await equipmentApi.getEqpIds(undefined, savedSdwt);
+      eqpIds.value = await equipmentApi.getEqpIds(
+        undefined,
+        savedSdwt,
+        "prealign"
+      );
 
       if (savedEqpId && eqpIds.value.includes(savedEqpId)) {
         filter.eqpId = savedEqpId;
@@ -293,10 +297,10 @@ const onSiteChange = async () => {
 };
 
 const onSdwtChange = async () => {
-  // [수정 1] 변경 시 localStorage 저장
   if (filter.sdwt) {
     localStorage.setItem("prealign_sdwt", filter.sdwt);
-    eqpIds.value = await equipmentApi.getEqpIds(undefined, filter.sdwt);
+    // [수정] type: 'prealign' 전달
+    eqpIds.value = await equipmentApi.getEqpIds(undefined, filter.sdwt, 'prealign');
   } else {
     localStorage.removeItem("prealign_sdwt");
     eqpIds.value = [];
@@ -584,4 +588,5 @@ const chartOption = computed(() => {
   }
 }
 </style>
+
 
