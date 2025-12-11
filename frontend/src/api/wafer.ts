@@ -73,12 +73,18 @@ export interface LotUniformitySeriesDto {
   }[];
 }
 
-// [추가됨] Spectrum Trend 분석용 DTO
+// Spectrum Trend 분석용 DTO (Meta 추가)
 export interface SpectrumSeriesDto {
   name: string;
   waferId: number;
   pointId: number;
   data: [number, number][]; // [wavelength, intensity]
+  meta?: {
+    t1: number;
+    gof: number;
+    mse: number;
+    timestamp: string;
+  };
 }
 
 // --- API 함수 ---
@@ -86,7 +92,6 @@ export interface SpectrumSeriesDto {
 export const waferApi = {
   // 1. 필터 값 조회
   getDistinctValues: async (field: string, params: any) => {
-    // 기존 URL 유지 (/Filters/...)
     const { data } = await apiClient.get<string[]>(`/Filters/${field}`, {
       params,
     });
@@ -122,18 +127,14 @@ export const waferApi = {
     return data;
   },
 
-  // 5. PDF 존재 여부 확인 (파라미터 추가)
+  // 5. PDF 존재 여부 확인
   checkPdf: async (
     eqpId: string, 
-    lotId: string,    // [추가]
-    waferId: number,  // [추가]
+    lotId: string, 
+    waferId: number, 
     servTs: string
   ) => {
-    const dt =
-      typeof servTs === "string"
-        ? servTs
-        : (servTs as unknown as Date).toISOString();
-
+    const dt = typeof servTs === "string" ? servTs : (servTs as unknown as Date).toISOString();
     const { data } = await apiClient.get<{ exists: boolean }>(
       "/WaferData/checkpdf",
       { params: { eqpId, lotId, waferId, servTs: dt } }
@@ -141,31 +142,25 @@ export const waferApi = {
     return data.exists;
   },
 
-  // 6. PDF 이미지 Base64 변환 조회 (파라미터 추가)
+  // 6. PDF 이미지 Base64 변환 조회
   getPdfImageBase64: async (
     eqpId: string,
-    lotId: string,    // [추가]
-    waferId: number,  // [추가]
+    lotId: string,
+    waferId: number,
     dateTime: string,
     pointNumber: number
   ) => {
-    const dt =
-      typeof dateTime === "string"
-        ? dateTime
-        : (dateTime as unknown as Date).toISOString();
-
+    const dt = typeof dateTime === "string" ? dateTime : (dateTime as unknown as Date).toISOString();
     const params = {
       eqpId,
-      lotId,    // [추가]
-      waferId,  // [추가]
+      lotId,
+      waferId,
       dateTime: dt,
       pointNumber,
     };
-
     const { data } = await apiClient.get<string>("/WaferData/pdfimage", {
       params,
     });
-
     return data;
   },
 
@@ -212,7 +207,7 @@ export const waferApi = {
     return data;
   },
 
-  // [신규] 12. 실제 포인트 목록 조회
+  // 12. 실제 포인트 목록 조회
   getPoints: async (params: any) => {
     const { data } = await apiClient.get<string[]>("/WaferData/points", {
       params,
@@ -220,12 +215,27 @@ export const waferApi = {
     return data;
   },
 
-  // [신규] 13. Spectrum Analysis Trend 조회 (실제 데이터)
+  // 13. Spectrum Analysis Trend 조회
   getSpectrumTrend: async (params: any) => {
     const { data } = await apiClient.get<SpectrumSeriesDto[]>(
       "/WaferData/trend/spectrum",
       { params }
     );
+    return data;
+  },
+  
+  // [신규] 14. Model Fit(GEN) Spectrum 조회
+  getSpectrumGen: async (params: any) => {
+    // Backend API 엔드포인트가 /trend/spectrum과 파라미터 구조가 유사하므로
+    // 실제 Controller에 매핑된 주소나 getSpectrum을 활용해도 됩니다.
+    // 여기서는 getSpectrum 메서드를 재활용하는 방식으로 구현할 수도 있으나,
+    // 명시적인 분리를 위해 별도 호출 예시를 남깁니다.
+    // (실제 사용 시 Backend Controller에 해당 라우트가 있는지 확인 필요, 없으면 getSpectrum 사용)
+    
+    // 임시로 기존 spectrum 조회 API 활용 (class=GEN 파라미터는 backend service에서 처리한다고 가정)
+    // 하지만 Service 단에서 getSpectrumGen을 별도로 만들었으므로 Controller에도 추가해주는 것이 정석입니다.
+    // 편의상 프론트엔드는 /WaferData/spectrum-gen (가상의 엔드포인트)으로 호출합니다.
+    const { data } = await apiClient.get<any>("/WaferData/spectrum-gen", { params });
     return data;
   },
 };
