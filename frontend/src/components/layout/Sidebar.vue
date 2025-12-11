@@ -213,6 +213,11 @@ const menuGroups = [
         label: "Alert History",
         icon: "pi pi-bell", // [변경] bell(알림)로 명시적 설정
       },
+      {
+        to: "/health",
+        label: "Equipment Health",
+        icon: "pi pi-heart-pulse",
+      },
     ],
   },
 ];
@@ -252,3 +257,4 @@ const toggleGroup = (group: string) => {
   scrollbar-width: none;
 }
 </style>
+
