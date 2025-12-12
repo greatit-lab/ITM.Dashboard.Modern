@@ -279,9 +279,15 @@ onMounted(async () => {
     }
   }
   themeObserver = new MutationObserver((m) => {
-    m.forEach((mu) => { if (mu.attributeName === "class") isDarkMode.value = document.documentElement.classList.contains("dark"); });
+    m.forEach((mu) => {
+      if (mu.attributeName === "class")
+        isDarkMode.value = document.documentElement.classList.contains("dark");
+    });
   });
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
 });
 onUnmounted(() => themeObserver?.disconnect());
 
