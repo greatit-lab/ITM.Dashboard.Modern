@@ -56,15 +56,21 @@ export class WaferController {
     return this.waferService.getLotUniformityTrend(query);
   }
 
-  // [신규] Spectrum Analysis - 실제 포인트 목록 조회
+  // Spectrum Analysis - 실제 포인트 목록 조회
   @Get('points')
   getPoints(@Query() query: WaferQueryParams) {
     return this.waferService.getDistinctPoints(query);
   }
 
-  // [신규] Spectrum Analysis - 실제 스펙트럼 트렌드 데이터 조회
+  // Spectrum Trend 데이터 조회
   @Get('trend/spectrum')
   getSpectrumTrend(@Query() query: WaferQueryParams) {
     return this.waferService.getSpectrumTrend(query);
+  }
+
+  // Model Fit(GEN) Spectrum 조회 엔드포인트
+  @Get('spectrum-gen')
+  getSpectrumGen(@Query() query: WaferQueryParams) {
+    return this.waferService.getSpectrumGen(query);
   }
 }
