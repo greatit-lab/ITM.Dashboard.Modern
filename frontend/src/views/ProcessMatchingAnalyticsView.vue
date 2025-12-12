@@ -41,6 +41,7 @@
             @change="onSiteChange"
           />
         </div>
+
         <div class="min-w-[160px] shrink-0">
           <Select
             v-model="filterStore.selectedSdwt"
@@ -54,7 +55,24 @@
             @change="onSdwtChange"
           />
         </div>
+
+        <div class="min-w-[160px] shrink-0">
+          <Select
+            v-model="refEqpId"
+            :options="refEqpList"
+            filter
+            placeholder="Ref. EQP (Standard)"
+            :disabled="!filterStore.selectedSdwt"
+            showClear
+            class="w-full custom-dropdown small"
+            overlayClass="custom-dropdown-panel small"
+            :class="{ '!text-slate-400': !refEqpId }"
+            @change="onRefEqpChange"
+          />
+        </div>
+
         <div class="w-px h-6 mx-1 bg-slate-200 dark:bg-zinc-700 shrink-0"></div>
+
         <div class="min-w-[140px] shrink-0">
           <DatePicker
             v-model="filters.startDate"
@@ -62,6 +80,7 @@
             dateFormat="yy-mm-dd"
             placeholder="Start"
             class="w-full custom-dropdown small date-picker"
+            @update:model-value="onDateChange"
           />
         </div>
         <div class="min-w-[140px] shrink-0">
@@ -71,9 +90,11 @@
             dateFormat="yy-mm-dd"
             placeholder="End"
             class="w-full custom-dropdown small date-picker"
+            @update:model-value="onDateChange"
           />
         </div>
       </div>
+
       <div
         class="flex items-center gap-1 pl-2 ml-auto border-l border-slate-100 dark:border-zinc-800"
       >
@@ -117,24 +138,26 @@
               Target Condition
             </div>
             <div class="pl-2 space-y-2">
+              <div v-if="!refEqpId" class="text-[10px] text-amber-500 italic mb-2 pl-1">
+                * Please select Reference EQP first.
+              </div>
+              
               <div>
-                <label class="text-[10px] text-slate-400 block mb-1"
-                  >CASSETTE RCP</label
-                >
+                <label class="text-[10px] text-slate-400 block mb-1">CASSETTE RCP</label>
                 <Select
                   v-model="filters.cassetteRcp"
                   :options="cassetteRcps"
                   placeholder="Select Recipe"
                   filter
+                  :disabled="!refEqpId"
                   class="w-full custom-dropdown small"
                   overlayClass="custom-dropdown-panel small"
                   @change="onCassetteChange"
                 />
               </div>
+              
               <div>
-                <label class="text-[10px] text-slate-400 block mb-1"
-                  >STAGE GROUP</label
-                >
+                <label class="text-[10px] text-slate-400 block mb-1">STAGE GROUP</label>
                 <Select
                   v-model="filters.stageGroup"
                   :options="stageGroups"
@@ -145,10 +168,9 @@
                   @change="onConditionChange"
                 />
               </div>
+              
               <div>
-                <label class="text-[10px] text-slate-400 block mb-1"
-                  >FILM</label
-                >
+                <label class="text-[10px] text-slate-400 block mb-1">FILM</label>
                 <Select
                   v-model="filters.film"
                   :options="films"
@@ -173,7 +195,7 @@
                   class="w-4 h-4 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400 flex items-center justify-center text-[9px]"
                   >2</span
                 >
-                Equipments
+                Compare Targets
               </div>
 
               <div
@@ -205,14 +227,14 @@
               class="text-[10px] text-slate-400 italic pl-2 py-4 text-center border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-lg"
             >
               <i class="block mb-1 pi pi-exclamation-circle"></i>
-              Please select Stage Group<br />(and Film if multiple)
+              Select full conditions to find matching equipments.
             </div>
 
             <div
               v-else-if="targetEqps.length === 0"
               class="text-[10px] text-slate-400 italic pl-2"
             >
-              No equipments found.
+              No matching equipments found.
             </div>
 
             <div
@@ -224,11 +246,13 @@
                 :key="eqp"
                 @click="toggleEqp(eqp)"
                 class="flex items-center gap-2 px-3 py-2 mb-1 transition-all rounded-md cursor-pointer select-none"
-                :class="
+                :class="[
                   selectedEqps.includes(eqp)
-                    ? 'bg-sky-500 text-white shadow-sm font-bold'
+                    ? (eqp === refEqpId 
+                        ? 'bg-indigo-500 text-white shadow-sm font-bold ring-1 ring-indigo-400' 
+                        : 'bg-sky-500 text-white shadow-sm font-bold')
                     : 'hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-slate-400'
-                "
+                ]"
               >
                 <i
                   :class="
@@ -239,6 +263,7 @@
                   class="text-[10px]"
                 ></i>
                 <span class="text-xs">{{ eqp }}</span>
+                <span v-if="eqp === refEqpId" class="ml-auto text-[9px] bg-white/20 px-1.5 rounded font-bold border border-white/30">REF</span>
               </div>
             </div>
           </div>
@@ -259,6 +284,7 @@
       </div>
 
       <div class="flex flex-col flex-1 h-full gap-3 overflow-hidden">
+        
         <div
           class="flex-[3] min-h-0 bg-white border shadow-sm rounded-xl dark:bg-[#111111] border-slate-200 dark:border-zinc-800 flex flex-col relative"
         >
@@ -289,7 +315,7 @@
               class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 opacity-60"
             >
               <i class="mb-2 text-3xl pi pi-chart-bar opacity-30"></i>
-              <span class="text-xs">Select equipments and click Analyze.</span>
+              <span class="text-xs">Select targets and click Analyze.</span>
             </div>
             <EChart v-else :option="boxPlotOption" class="w-full h-full" />
           </div>
@@ -361,7 +387,7 @@
               <i class="mb-2 text-3xl pi pi-chart-scatter opacity-30"></i>
               <span class="text-xs">Scatter plot will appear here.</span>
             </div>
-            <EChart v-else :option="scatterOption" class="w-full h-full" />
+            <EChart v-else :key="String(showAnalytics)" :option="scatterOption" class="w-full h-full" />
           </div>
         </div>
       </div>
@@ -374,6 +400,7 @@ import { ref, reactive, onMounted, computed, onUnmounted } from "vue";
 import { useFilterStore } from "@/stores/filter";
 import { dashboardApi } from "@/api/dashboard";
 import { waferApi } from "@/api/wafer";
+import { equipmentApi } from "@/api/equipment"; 
 import EChart from "@/components/common/EChart.vue";
 
 // Components
@@ -382,6 +409,7 @@ import DatePicker from "primevue/datepicker";
 import Button from "primevue/button";
 import ToggleSwitch from "primevue/toggleswitch";
 
+// Type Definitions
 interface ComparisonRow {
   eqpid: string;
   lotid: string;
@@ -398,6 +426,7 @@ interface FilterState {
   film?: string;
 }
 
+// Stores & State
 const filterStore = useFilterStore();
 const isEqpLoading = ref(false);
 const isDataLoading = ref(false);
@@ -406,6 +435,10 @@ const showAnalytics = ref(false);
 
 const sites = ref<string[]>([]);
 const sdwts = ref<string[]>([]);
+
+// Reference EQP State
+const refEqpId = ref<string>("");
+const refEqpList = ref<string[]>([]);
 
 const filters = reactive<FilterState>({
   startDate: new Date(Date.now() - 7 * 864e5),
@@ -434,36 +467,34 @@ const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 let themeObserver: MutationObserver;
 
 const colors = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#84cc16",
-  "#f97316",
-  "#6366f1",
+  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+  "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
 ];
 
 const isListVisible = computed(() => {
   if (!filters.stageGroup) return false;
-  if (films.value.length > 1 && !filters.film) return false;
+  if (films.value.length > 0 && !filters.film) return false;
   return true;
 });
 
+// Lifecycle Hooks
 onMounted(async () => {
   sites.value = await dashboardApi.getSites();
+  
+  // LocalStorage Restore Logic
   const savedSite = localStorage.getItem("pm_site");
   const savedSdwt = localStorage.getItem("pm_sdwt");
+  
   if (savedSite && sites.value.includes(savedSite)) {
     filterStore.selectedSite = savedSite;
     sdwts.value = await dashboardApi.getSdwts(savedSite);
+    
     if (savedSdwt) {
       filterStore.selectedSdwt = savedSdwt;
-      await loadOptions();
+      await loadRefEqpList(); // Load Equipment List for Ref
     }
   }
+
   themeObserver = new MutationObserver((m) => {
     m.forEach((mu) => {
       if (mu.attributeName === "class")
@@ -475,8 +506,10 @@ onMounted(async () => {
     attributeFilter: ["class"],
   });
 });
+
 onUnmounted(() => themeObserver?.disconnect());
 
+// Handlers
 const onSiteChange = async () => {
   if (filterStore.selectedSite) {
     localStorage.setItem("pm_site", filterStore.selectedSite);
@@ -487,15 +520,43 @@ const onSiteChange = async () => {
   }
   filterStore.selectedSdwt = "";
   localStorage.removeItem("pm_sdwt");
+  
+  refEqpId.value = "";
+  refEqpList.value = [];
   resetConditions();
 };
 
-const onSdwtChange = () => {
-  if (filterStore.selectedSdwt)
+const onSdwtChange = async () => {
+  if (filterStore.selectedSdwt) {
     localStorage.setItem("pm_sdwt", filterStore.selectedSdwt);
-  else localStorage.removeItem("pm_sdwt");
+    await loadRefEqpList(); // Load equipments when SDWT changes
+  } else {
+    localStorage.removeItem("pm_sdwt");
+    refEqpList.value = [];
+  }
+  refEqpId.value = "";
   resetConditions();
-  loadOptions();
+};
+
+const loadRefEqpList = async () => {
+  if (filterStore.selectedSdwt) {
+    // Type 'wafer' ensures we get equipments that actually produce data
+    refEqpList.value = await equipmentApi.getEqpIds(undefined, filterStore.selectedSdwt, 'wafer');
+  }
+};
+
+const onRefEqpChange = async () => {
+  resetConditions();
+  if (refEqpId.value) {
+    await loadOptions(); // Load Recipes based on Ref EQP
+  }
+};
+
+const onDateChange = async () => {
+  if (refEqpId.value) {
+    resetConditions();
+    await loadOptions();
+  }
 };
 
 const resetConditions = () => {
@@ -509,8 +570,16 @@ const resetConditions = () => {
   selectedEqps.value = [];
 };
 
+const getBaseParams = () => ({
+  site: filterStore.selectedSite || "",
+  sdwt: filterStore.selectedSdwt || "",
+  eqpId: refEqpId.value || "", // Filter by Reference EQP
+  startDate: filters.startDate ? new Date(filters.startDate).toISOString() : "",
+  endDate: filters.endDate ? new Date(filters.endDate).toISOString() : "",
+});
+
 const loadOptions = async () => {
-  if (filterStore.selectedSdwt)
+  if (filterStore.selectedSdwt && refEqpId.value)
     cassetteRcps.value = await waferApi.getDistinctValues(
       "cassettercps",
       getBaseParams()
@@ -522,10 +591,10 @@ const onCassetteChange = async () => {
   filters.film = undefined;
   selectedEqps.value = [];
   targetEqps.value = [];
+  
   if (filters.cassetteRcp) {
     const params = { ...getBaseParams(), cassetteRcp: filters.cassetteRcp };
     stageGroups.value = await waferApi.getDistinctValues("stagegroups", params);
-    loadEquipments();
   }
 };
 
@@ -538,28 +607,31 @@ const onConditionChange = async () => {
     };
     films.value = await waferApi.getDistinctValues("films", params);
   }
+  // Search for matching equipments whenever conditions change
   loadEquipments();
 };
 
-const getBaseParams = () => ({
-  site: filterStore.selectedSite || "",
-  sdwt: filterStore.selectedSdwt || "",
-  startDate: filters.startDate ? new Date(filters.startDate).toISOString() : "",
-  endDate: filters.endDate ? new Date(filters.endDate).toISOString() : "",
-});
-
 const loadEquipments = async () => {
-  if (!filters.cassetteRcp) return;
+  if (!filters.cassetteRcp || !filters.stageGroup) return;
+  
   isEqpLoading.value = true;
   try {
     const params = {
-      ...getBaseParams(),
+      ...getBaseParams(), // Includes start/end date
       cassetteRcp: filters.cassetteRcp ?? "",
       stageGroup: filters.stageGroup ?? "",
       film: filters.film ?? "",
     };
+    
+    // API returns ALL equipments that processed this condition in the time range
     targetEqps.value = await waferApi.getMatchingEquipments(params);
-    selectedEqps.value = [];
+    
+    // Auto-select Reference EQP if it exists in the result
+    if (refEqpId.value && targetEqps.value.includes(refEqpId.value)) {
+        selectedEqps.value = [refEqpId.value];
+    } else {
+        selectedEqps.value = [];
+    }
   } catch (e) {
     console.error(e);
   } finally {
@@ -607,12 +679,12 @@ const loadComparisonData = async () => {
         scatterOptions.value = ["point", ...measurementKeys];
 
         const t1 = measurementKeys.find((k) => k.toLowerCase() === "t1");
-        const tStart = measurementKeys.find((k) =>
-          k.toLowerCase().startsWith("t")
-        );
-        const defaultMetric = t1 || tStart || measurementKeys[0] || "";
+        const defaultMetric = t1 || measurementKeys[0] || "";
 
-        selectedMetric.value = defaultMetric;
+        if (!selectedMetric.value || !metricOptions.value.includes(selectedMetric.value)) {
+             selectedMetric.value = defaultMetric;
+        }
+        
         scatterX.value = "point";
         scatterY.value = defaultMetric;
       }
@@ -627,32 +699,29 @@ const loadComparisonData = async () => {
 
 const resetFilters = () => {
   filterStore.reset();
+  refEqpId.value = "";
+  refEqpList.value = [];
   resetConditions();
   hasSearched.value = false;
   localStorage.removeItem("pm_site");
   localStorage.removeItem("pm_sdwt");
 };
 
-// --- Math Helpers for Advanced Analytics (Fixed for TS Errors) ---
+// --- Math Helpers for Advanced Analytics ---
 
-// 1. Calculate Mean and Covariance Matrix
 const getBasicStats = (points: number[][]) => {
   const n = points.length;
   if (n < 2) return null;
 
-  let sumX = 0,
-    sumY = 0;
+  let sumX = 0, sumY = 0;
   points.forEach((p) => {
-    // [수정] ! 대신 ?? 0 사용으로 타입 안전성 확보
     sumX += p[0] ?? 0;
     sumY += p[1] ?? 0;
   });
   const meanX = sumX / n;
   const meanY = sumY / n;
 
-  let sumXX = 0,
-    sumYY = 0,
-    sumXY = 0;
+  let sumXX = 0, sumYY = 0, sumXY = 0;
   points.forEach((p) => {
     const x = p[0] ?? 0;
     const y = p[1] ?? 0;
@@ -662,27 +731,18 @@ const getBasicStats = (points: number[][]) => {
   });
 
   return {
-    meanX,
-    meanY,
+    meanX, meanY,
     covXX: sumXX / (n - 1),
     covYY: sumYY / (n - 1),
     covXY: sumXY / (n - 1),
   };
 };
 
-// 2. Generate Ellipse Points (95% Confidence)
 const getEllipsePoints = (
-  meanX: number,
-  meanY: number,
-  covXX: number,
-  covYY: number,
-  covXY: number,
-  steps = 100
+  meanX: number, meanY: number, covXX: number, covYY: number, covXY: number, steps = 100
 ) => {
-  const lambda1 =
-    (covXX + covYY + Math.sqrt((covXX - covYY) ** 2 + 4 * covXY ** 2)) / 2;
-  const lambda2 =
-    (covXX + covYY - Math.sqrt((covXX - covYY) ** 2 + 4 * covXY ** 2)) / 2;
+  const lambda1 = (covXX + covYY + Math.sqrt((covXX - covYY) ** 2 + 4 * covXY ** 2)) / 2;
+  const lambda2 = (covXX + covYY - Math.sqrt((covXX - covYY) ** 2 + 4 * covXY ** 2)) / 2;
 
   const chiSquare95 = 5.991;
   const majorAxis = 2 * Math.sqrt(chiSquare95 * Math.abs(lambda1));
@@ -703,26 +763,17 @@ const getEllipsePoints = (
   return points;
 };
 
-// 3. Simple Linear Regression
 const getRegressionLine = (points: number[][]) => {
   const n = points.length;
   if (n < 2) return null;
 
-  let sumX = 0,
-    sumY = 0,
-    sumXY = 0,
-    sumXX = 0;
-  let minX = Infinity,
-    maxX = -Infinity;
+  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+  let minX = Infinity, maxX = -Infinity;
 
   points.forEach((p) => {
-    // [수정] ! 대신 ?? 0 사용
     const x = p[0] ?? 0;
     const y = p[1] ?? 0;
-    sumX += x;
-    sumY += y;
-    sumXY += x * y;
-    sumXX += x * x;
+    sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
     if (x < minX) minX = x;
     if (x > maxX) maxX = x;
   });
@@ -745,10 +796,7 @@ const getRegressionLine = (points: number[][]) => {
 
 // --- Chart Options ---
 
-// (Box Plot Logic - TS Error Fix)
-const calculateBoxPlotData = (
-  data: readonly (number | undefined)[]
-): number[] => {
+const calculateBoxPlotData = (data: readonly (number | undefined)[]): number[] => {
   const values: number[] = [];
   for (const v of data) {
     if (typeof v === "number" && !Number.isNaN(v)) values.push(v);
@@ -756,7 +804,6 @@ const calculateBoxPlotData = (
   if (values.length === 0) return [0, 0, 0, 0, 0];
   const sorted = values.slice().sort((a, b) => a - b);
 
-  // [Fix] Assertions that sorted elements exist
   const min = sorted[0]!;
   const max = sorted[sorted.length - 1]!;
 
@@ -772,9 +819,8 @@ const quantile = (sorted: number[], q: number): number => {
   const base = Math.floor(pos);
   const rest = pos - base;
 
-  // [Fix] Handle potential undefined with safeguards
   const baseVal = sorted[base] ?? 0;
-  const nextVal = sorted[base + 1]; // Can be undefined if base is last index
+  const nextVal = sorted[base + 1];
 
   if (typeof nextVal === "number") {
     return baseVal + rest * (nextVal - baseVal);
@@ -798,10 +844,8 @@ const boxPlotOption = computed(() => {
     const stats = calculateBoxPlotData(values);
     boxData.push(stats);
 
-    // ✅ index 접근 결과를 안전하게 number로 좁힘
     const q1 = stats[1] ?? 0;
     const q3 = stats[3] ?? 0;
-
     const iqr = q3 - q1;
     const lower = q1 - 1.5 * iqr;
     const upper = q3 + 1.5 * iqr;
@@ -812,9 +856,7 @@ const boxPlotOption = computed(() => {
   });
 
   const textColor = isDarkMode.value ? "#cbd5e1" : "#475569";
-  const gridColor = isDarkMode.value
-    ? "rgba(255,255,255,0.1)"
-    : "rgba(0,0,0,0.1)";
+  const gridColor = isDarkMode.value ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
 
   return {
     backgroundColor: "transparent",
@@ -856,16 +898,13 @@ const boxPlotOption = computed(() => {
 const scatterOption = computed(() => {
   if (rawData.value.length === 0) return {};
   const textColor = isDarkMode.value ? "#cbd5e1" : "#475569";
-  const gridColor = isDarkMode.value
-    ? "rgba(255,255,255,0.1)"
-    : "rgba(0,0,0,0.1)";
+  const gridColor = isDarkMode.value ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
 
   const series: any[] = [];
 
   selectedEqps.value.forEach((eqp, idx) => {
     const color = colors[idx % colors.length];
 
-    // 1. Raw Data Points (Mixed types including strings for tooltip)
     const points = rawData.value
       .filter(
         (r): r is ComparisonRow & Record<string, number> =>
@@ -889,7 +928,6 @@ const scatterOption = computed(() => {
       emphasis: { focus: "series" },
     });
 
-    // [Fix] Extract purely numeric points for math functions to prevent type errors
     if (showAnalytics.value && points.length > 2) {
       const numPoints = points.map((p) => [Number(p[0]), Number(p[1])]);
       const stats = getBasicStats(numPoints);
@@ -909,20 +947,14 @@ const scatterOption = computed(() => {
           },
           data: [[stats.meanX, stats.meanY]],
           tooltip: {
-            formatter: `${eqp} Center<br/>X: ${stats.meanX.toFixed(
-              3
-            )}<br/>Y: ${stats.meanY.toFixed(3)}`,
+            formatter: `${eqp} Center<br/>X: ${stats.meanX.toFixed(3)}<br/>Y: ${stats.meanY.toFixed(3)}`,
           },
           z: 100,
         });
 
         // B. Confidence Ellipse
         const ellipsePoints = getEllipsePoints(
-          stats.meanX,
-          stats.meanY,
-          stats.covXX,
-          stats.covYY,
-          stats.covXY
+          stats.meanX, stats.meanY, stats.covXX, stats.covYY, stats.covXY
         );
         series.push({
           name: `${eqp} 95% Conf.`,
@@ -956,9 +988,7 @@ const scatterOption = computed(() => {
     backgroundColor: "transparent",
     tooltip: {
       trigger: "item",
-      backgroundColor: isDarkMode.value
-        ? "rgba(24,24,27,0.9)"
-        : "rgba(255,255,255,0.95)",
+      backgroundColor: isDarkMode.value ? "rgba(24,24,27,0.9)" : "rgba(255,255,255,0.95)",
       textStyle: { color: isDarkMode.value ? "#fff" : "#1e293b" },
       formatter: (params: any) => {
         if (
@@ -1003,7 +1033,6 @@ const scatterOption = computed(() => {
 </script>
 
 <style scoped>
-/* (기존 스타일 유지) */
 :deep(.p-select),
 :deep(.custom-dropdown) {
   @apply !bg-slate-100 dark:!bg-zinc-800/50 !border-0 text-slate-700 dark:text-slate-200 rounded-lg font-bold shadow-none transition-colors;
