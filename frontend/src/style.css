@@ -3,8 +3,102 @@
 @tailwind components;
 @tailwind utilities;
 
-/* [수정] 커스텀 아이콘: 중괄호 { } 모양 및 정렬 수정 */
-/* 아이콘 컨테이너: 표준 아이콘과 동일한 너비(1em)를 차지하도록 강제하여 텍스트 정렬을 맞춤 */
+/* ==========================================================================
+   1. Cross-Browser Normalization (Chrome & Edge Consistency)
+   브라우저 간 폰트 렌더링, 스크롤바, 레이아웃 계산 방식을 강제 통일합니다.
+   ========================================================================== */
+
+:root {
+  /* 폰트 렌더링 방식 강제 통일: Windows Edge에서 폰트가 굵게 퍼지는 현상 방지 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* 텍스트 렌더링 최적화: 자간 및 커닝(Kerning) 정밀 계산 */
+  text-rendering: optimizeLegibility;
+  
+  /* 모바일/태블릿 등에서 브라우저가 글자를 임의로 확대하는 것 방지 */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  
+  /* 스크롤바 안정화: 스크롤바 유무에 따른 레이아웃 흔들림(Layout Shift) 방지 */
+  scrollbar-gutter: stable;
+}
+
+html, body {
+  /* 시스템 폰트보다 'Inter'가 무조건 최우선 적용되도록 !important 사용 */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  
+  /* 폰트 크기 및 줄 간격 베이스 라인 고정 */
+  font-size: 16px;
+  line-height: 1.5;
+  
+  /* 텍스트 기본 색상 지정 (다크 모드 대응) */
+  @apply text-slate-900 dark:text-slate-100;
+  
+  /* 가로 스크롤 방지 */
+  overflow-x: hidden;
+}
+
+/* Chrome, Edge, Safari 등 WebKit 기반 브라우저 스크롤바 디자인 통일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ==========================================================================
+   2. PrimeVue Component Overrides (Layout Fixes)
+   PrimeVue 컴포넌트들의 높이 계산 및 정렬 오차를 수정합니다.
+   ========================================================================== */
+
+/* 버튼: 브라우저마다 다른 line-height 기본값을 무시하고 강제 통일 */
+.p-button {
+  @apply !flex !items-center !justify-center;
+  line-height: 1.2 !important; /* 아이콘과 텍스트 수직 정렬 오차 제거 */
+}
+
+/* 버튼 아이콘 위치 미세 조정 (폰트 렌더링 차이 보정) */
+.p-button-icon {
+  margin-top: -1px; 
+}
+
+/* 입력 필드 및 셀렉트: 높이 계산 방식 통일 (User Agent 스타일 무시) */
+.p-inputtext, 
+.p-select {
+  line-height: normal !important; 
+  box-sizing: border-box !important;
+}
+
+/* 드롭다운 패널 폰트 사이즈 고정 (Zoom 배율 영향 최소화) */
+.p-select-option, 
+.p-dropdown-item {
+  font-family: inherit !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   3. Custom Utility Classes & Icons
+   프로젝트 전용 커스텀 스타일 정의
+   ========================================================================== */
+
+/* 커스텀 아이콘: 중괄호 { } 모양 */
 .pi-curly-braces {
   display: inline-block;
   width: 1em;          
@@ -22,4 +116,9 @@
   letter-spacing: -1px;/* 자간을 좁혀서 아이콘처럼 보이게 함 */
   display: inline-block;
   transform: scaleY(1.1); /* 세로로 살짝 길게 늘려 아이콘 비율 맞춤 */
+}
+
+/* PrimeVue DataTable 헤더 스타일 커스터마이징 */
+:deep(.p-datatable-thead > tr > th) {
+  @apply font-extrabold text-xs text-slate-500 dark:text-slate-400 bg-transparent uppercase tracking-wider py-3 border-b border-slate-200 dark:border-zinc-700;
 }
