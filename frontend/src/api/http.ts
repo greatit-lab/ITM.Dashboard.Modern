@@ -1,12 +1,14 @@
-import axios from 'axios';
+// frontend/src/api/http.ts
+import axios from "axios";
 
-// [수정] C# API(7278) 대신 NestJS API(3000) 주소로 변경합니다.
-const baseURL = 'http://localhost:3000/api';
+// [수정] 배포 시 Nginx Proxy를 타도록 상대 경로 혹은 환경변수 사용
+// const baseURL = 'http://localhost:3000/api'; // (X) 개발용
+const baseURL = import.meta.env.VITE_API_URL || "/api"; // (O) 배포용 권장
 
 const http = axios.create({
   baseURL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
