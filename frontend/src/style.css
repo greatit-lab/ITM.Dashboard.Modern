@@ -13,8 +13,11 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
-  /* 텍스트 렌더링 최적화: 자간 및 커닝(Kerning) 정밀 계산 */
-  text-rendering: optimizeLegibility;
+  /* [수정됨] 텍스트 렌더링 최적화: 가독성보다 기하학적 정밀도(너비)를 우선시하여 Edge 레이아웃 깨짐 방지 */
+  text-rendering: geometricPrecision;
+  
+  /* [추가됨] 브라우저가 임의로 폰트 굵기나 스타일을 합성하는 것을 방지 */
+  font-synthesis: none;
   
   /* 모바일/태블릿 등에서 브라우저가 글자를 임의로 확대하는 것 방지 */
   -webkit-text-size-adjust: 100%;
@@ -34,8 +37,8 @@ html, body {
   font-size: 16px;
   line-height: 1.5;
   
-  /* 텍스트 기본 색상 지정 (다크 모드 대응) */
-  @apply text-slate-900 dark:text-slate-100;
+  /* [수정됨] 텍스트 기본 색상 및 자간(tracking-tight) 적용하여 Edge에서 글자 퍼짐 상쇄 */
+  @apply text-slate-900 dark:text-slate-100 tracking-tight;
   
   /* 가로 스크롤 방지 */
   overflow-x: hidden;
